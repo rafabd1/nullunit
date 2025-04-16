@@ -1,7 +1,10 @@
-import type { NextConfig } from "next";
+import { withContentlayer } from "next-contentlayer";
 
-const nextConfig: NextConfig = {
-  /* config options here */
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+  // Opção correta para pacotes externos
+  serverExternalPackages: ['contentlayer/generated']
 };
 
-export default nextConfig;
+export default withContentlayer(nextConfig);
