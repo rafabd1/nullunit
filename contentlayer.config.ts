@@ -1,5 +1,4 @@
 import { defineDocumentType, makeSource } from 'contentlayer/source-files'
-// import rehypeHighlight from 'rehype-highlight' // Import commented out as the plugin is disabled
 
 export const Article = defineDocumentType(() => ({
     name: 'Article',
@@ -24,7 +23,5 @@ export default makeSource({
     contentDirPath: 'content',
     documentTypes: [Article],
     mdx: {
-        // rehypePlugins: [rehypeHighlight], // Temporarily commented out to isolate the issue
     },
-    // disableImportAliasWarning: true, // Removed as alias is not currently used
 })
