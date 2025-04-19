@@ -6,10 +6,6 @@ export const siteConfig = {
     "NullUnit Cybersecurity Team - Bug Bounty, CTFs, Articles & Courses.",
   navItems: [
     {
-      label: "Home",
-      href: "/",
-    },
-    {
       label: "Articles",
       href: "/articles",
     },
@@ -27,7 +23,6 @@ export const siteConfig = {
     },
   ],
   navMenuItems: [
-    { label: "Home", href: "/" },
     { label: "Articles", href: "/articles" },
     { label: "Portfolio", href: "/portfolio" },
     { label: "Members", href: "/members" },

@@ -217,9 +217,7 @@ export const Navbar = () => {
               offset: 10,
               disableAnimation: true,
               shouldCloseOnBlur: false,
-              classNames: {
-                listboxWrapper: "max-h-[400px]",
-              },
+              className: "max-h-[400px]",
             }}
           >
             {(item) => (
@@ -250,10 +248,10 @@ export const Navbar = () => {
           <Button
             isExternal
             as={Link}
-            className="text-sm font-normal text-default-600 bg-default-100"
+            className="text-sm font-normal text-default-600"
             href={siteConfig.links.sponsor}
             startContent={<HeartFilledIcon className="text-danger" />}
-            variant="flat"
+            variant="light"
           >
             Sponsor
           </Button>
