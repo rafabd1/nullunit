@@ -4,6 +4,8 @@ import { notFound } from 'next/navigation';
 import NextLink from 'next/link';
 import { Link } from '@heroui/link';
 import clsx from 'clsx';
+import { Chip } from '@heroui/chip';
+import { User } from '@heroui/user';
 
 // Importar ReactMarkdown e o plugin GFM
 import ReactMarkdown from 'react-markdown';
@@ -61,8 +63,26 @@ export default async function ArticlePage({ params }: { params: { slug: string[]
 
       {/* Conteúdo Principal do Artigo */}
       <article className="w-full md:w-3/4 lg:w-4/5">
-        <h1 className="text-3xl md:text-4xl font-bold mb-4">{subArticle.title}</h1>
-        {/* TODO: Adicionar metadados como autor, data, tags aqui */}
+        <h1 className="text-3xl md:text-4xl font-bold mb-2">{subArticle.title}</h1>
+
+        {/* Seção de Metadados */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-6 text-sm text-default-600">
+          {subArticle.author && (
+            <span>By {subArticle.author}</span>
+          )}
+          {subArticle.publishedDate && (
+            <span>• Published on {new Date(subArticle.publishedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+          )}
+        </div>
+        {subArticle.tags && subArticle.tags.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-8">
+            {subArticle.tags.map((tag) => (
+              <Chip key={tag} color="primary" variant="flat" size="sm">
+                {tag}
+              </Chip>
+            ))}
+          </div>
+        )}
         
         {/* Usar TailwindCSS Typography para estilizar o Markdown renderizado */}
         <div className="prose dark:prose-invert max-w-none">

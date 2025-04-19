@@ -1,45 +1,85 @@
 import { Link } from "@heroui/link";
-import { Snippet } from "@heroui/snippet";
-import { Code } from "@heroui/code";
-import { button as buttonStyles } from "@heroui/theme";
+import { Button } from "@heroui/button";
+import NextLink from "next/link";
+import { Card, CardHeader, CardBody, CardFooter } from "@heroui/card";
 
-import { siteConfig } from "@/config/site";
 import { title, subtitle } from "@/components/primitives";
-import { GithubIcon } from "@/components/icons";
+import { mockArticleModules } from "@/lib/mock-articles"; // Importar artigos mock
 
 export default function Home() {
+  // Pegar os 2 primeiros módulos para exibir na home (exemplo)
+  const latestModules = mockArticleModules.slice(0, 2);
+
   return (
-    <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
-      <div className="inline-block max-w-xl text-center justify-center">
-        <span className={title()}>Make&nbsp;</span>
-        <span className={title({ color: "violet" })}>beautiful&nbsp;</span>
+    <section className="flex flex-col items-center justify-center gap-10 py-8 md:py-10">
+      {/* Seção Hero */}
+      <div className="inline-block max-w-3xl text-center justify-center">
+        <h1 className={title()}>Welcome to&nbsp;</h1>
+        <h1 className={title({ color: "violet" })}>NullUnit&nbsp;</h1>
         <br />
-        <span className={title()}>
-          websites regardless of your design experience.
-        </span>
-        <div className={subtitle({ class: "mt-4" })}>
-          Beautiful, fast and modern React UI library.
-        </div>
+        <h2 className={subtitle({ class: "mt-4" })}>
+          Your hub for cybersecurity knowledge sharing, CTF strategies, bug bounty insights, and collaborative research.
+        </h2>
       </div>
 
+      {/* Botões de Ação (Exemplo) */}
       <div className="flex gap-3">
-        <Link
-          isExternal
-          className={buttonStyles({ variant: "bordered", radius: "full" })}
-          href={siteConfig.links.github}
+        <Button 
+          as={NextLink} 
+          href="/articles"
+          color="primary" 
+          variant="solid"
+          size="lg"
         >
-          <GithubIcon size={20} />
-          GitHub
-        </Link>
+          Explore Articles
+        </Button>
+        <Button 
+          as={NextLink} 
+          href="/about"
+          color="primary" 
+          variant="bordered"
+          size="lg"
+        >
+          Learn More
+        </Button>
       </div>
 
-      <div className="mt-8">
-        <Snippet hideCopyButton hideSymbol variant="bordered">
-          <span>
-            Get started by editing <Code color="primary">app/page.tsx</Code>
-          </span>
-        </Snippet>
+      {/* Seção Últimos Artigos */}
+      <div className="w-full max-w-5xl mt-10">
+        <h3 className="text-2xl font-semibold mb-6 text-center">Latest Articles & Tutorials</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {latestModules.map((module) => (
+            <Card key={module.slug} shadow="sm">
+              <CardHeader className="pb-0 pt-2 px-4 flex-col items-start">
+                <h4 className="font-bold text-large">{module.title}</h4>
+                {module.description && (
+                  <small className="text-default-500">{module.description}</small>
+                )}
+              </CardHeader>
+              <CardFooter className="justify-start">
+                <Link
+                  as={NextLink}
+                  href={`/articles/${module.slug}/${module.subArticles[0].slug}`}
+                  color="primary"
+                  size="sm"
+                >
+                  Start Reading
+                </Link>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+        {mockArticleModules.length > 2 && (
+          <div className="text-center mt-6">
+            <Link as={NextLink} href="/articles" color="primary" showAnchorIcon>
+              View All Articles
+            </Link>
+          </div>
+        )}
       </div>
+
+      {/* TODO: Adicionar outras seções se necessário (ex: Sobre Nós Resumido, Call to Action para Discord/Sponsor) */}
+
     </section>
   );
 }

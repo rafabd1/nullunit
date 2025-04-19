@@ -3,6 +3,10 @@ export interface SubArticle {
   title: string; // Título do sub-artigo
   // O conteúdo pode ser string (Markdown/MDX) ou outro formato
   content: string;
+  // Metadados adicionados
+  author?: string; // Nome do autor ou username
+  publishedDate?: string; // Data no formato YYYY-MM-DD ou outro
+  tags?: string[]; // Lista de tags
   // Campos opcionais (podemos adicionar depois)
   // author?: string;
   // publishedDate?: string;
