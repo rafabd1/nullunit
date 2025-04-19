@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 export interface SubArticle {
   slug: string; // Identificador único para URL (ex: 'introducao-sql-injection')
   title: string; // Título do sub-artigo
