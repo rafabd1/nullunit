@@ -1,98 +1,56 @@
+/* eslint-disable prettier/prettier */
+import { notFound } from "next/navigation";
 import { mockArticleModules } from "@/lib/mock-articles";
 import { ArticleModule, SubArticle } from "@/types/article";
-import { notFound } from 'next/navigation';
-import NextLink from 'next/link';
-import { Link } from '@heroui/link';
-import clsx from 'clsx';
-import { Chip } from '@heroui/chip';
-import { User } from '@heroui/user';
+// Remover import dinâmico daqui
+// import dynamic from 'next/dynamic'; 
 
-// Importar ReactMarkdown e o plugin GFM
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+// Importar o NOVO loader estaticamente
+import { DynamicArticleLoader } from '@/components/dynamic-article-loader';
+
+// // Remover a constante do componente importado dinamicamente
+// const ArticleClientContent = dynamic(
+//   () => import('@/components/article-client-content').then(mod => mod.ArticleClientContent),
+//   { ssr: false }
+// );
 
 // Função para buscar os dados (simulando busca)
 async function getArticleData(params: { slug: string[] }): Promise<{
-  module: ArticleModule | undefined;
+  articleModule: ArticleModule | undefined;
   subArticle: SubArticle | undefined;
   moduleSlug: string;
   subArticleSlug: string;
 }> {
   const [moduleSlug, subArticleSlug] = params.slug || [];
-  const module = mockArticleModules.find((m) => m.slug === moduleSlug);
-  const subArticle = module?.subArticles.find((sa) => sa.slug === subArticleSlug);
+  const articleModule = mockArticleModules.find((m) => m.slug === moduleSlug);
+  const subArticle = articleModule?.subArticles.find(
+    (sa) => sa.slug === subArticleSlug,
+  );
 
-  return { module, subArticle, moduleSlug, subArticleSlug };
+  return { articleModule, subArticle, moduleSlug, subArticleSlug };
 }
 
-export default async function ArticlePage({ params }: { params: { slug: string[] } }) {
-  const { module, subArticle, moduleSlug, subArticleSlug } = await getArticleData(params);
+export default async function ArticlePage({
+  params,
+}: {
+  params: { slug: string[] };
+}) {
+  const { articleModule, subArticle, moduleSlug, subArticleSlug } =
+    await getArticleData(params);
 
   // Se módulo ou sub-artigo não for encontrado, mostrar página 404
-  if (!module || !subArticle) {
+  if (!articleModule || !subArticle) {
     notFound();
   }
 
+  // Renderizar o LOADER (que por sua vez carrega dinamicamente o conteúdo)
   return (
-    <div className="flex flex-col md:flex-row gap-8">
-      {/* Sidebar (Navegação do Módulo) */}
-      <aside className="w-full md:w-1/4 lg:w-1/5 flex-shrink-0">
-        <h3 className="text-lg font-semibold mb-4">{module.title}</h3>
-        <nav>
-          <ul>
-            {module.subArticles.map((sa) => (
-              <li key={sa.slug} className="mb-2">
-                <Link
-                  as={NextLink}
-                  href={`/articles/${moduleSlug}/${sa.slug}`}
-                  className={clsx(
-                    'block px-3 py-1 rounded hover:bg-default-100',
-                    {
-                      'bg-primary text-primary-foreground font-medium': sa.slug === subArticleSlug,
-                      'text-default-700': sa.slug !== subArticleSlug
-                    }
-                  )}
-                >
-                  {sa.title}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      </aside>
-
-      {/* Conteúdo Principal do Artigo */}
-      <article className="w-full md:w-3/4 lg:w-4/5">
-        <h1 className="text-3xl md:text-4xl font-bold mb-2">{subArticle.title}</h1>
-
-        {/* Seção de Metadados */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-6 text-sm text-default-600">
-          {subArticle.author && (
-            <span>By {subArticle.author}</span>
-          )}
-          {subArticle.publishedDate && (
-            <span>• Published on {new Date(subArticle.publishedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-          )}
-        </div>
-        {subArticle.tags && subArticle.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-8">
-            {subArticle.tags.map((tag) => (
-              <Chip key={tag} color="primary" variant="flat" size="sm">
-                {tag}
-              </Chip>
-            ))}
-          </div>
-        )}
-        
-        {/* Usar TailwindCSS Typography para estilizar o Markdown renderizado */}
-        <div className="prose dark:prose-invert max-w-none">
-          {/* Renderizar conteúdo com ReactMarkdown e GFM */}
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {subArticle.content}
-          </ReactMarkdown>
-        </div>
-      </article>
-    </div>
+    <DynamicArticleLoader 
+      module={articleModule}
+      subArticle={subArticle}
+      moduleSlug={moduleSlug}
+      subArticleSlug={subArticleSlug}
+    />
   );
 }
 
@@ -105,4 +63,4 @@ export default async function ArticlePage({ params }: { params: { slug: string[]
 //     });
 //   });
 //   return paths;
-// } 
+// }

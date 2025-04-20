@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { Card, CardHeader, CardBody, CardFooter } from "@heroui/card";
 import { Link } from "@heroui/link";
 import NextLink from "next/link";
@@ -29,8 +30,8 @@ export default function ArticlesPage() {
               {/* Link para o primeiro sub-artigo do módulo */}
               <Link
                 as={NextLink}
-                href={`/articles/${module.slug}/${module.subArticles[0].slug}`}
                 color="primary"
+                href={`/articles/${module.slug}/${module.subArticles[0].slug}`}
               >
                 Start Reading
               </Link>
