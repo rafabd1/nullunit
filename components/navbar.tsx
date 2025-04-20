@@ -54,21 +54,48 @@ export const Navbar = () => {
       if (!query) return [];
       const lowerQuery = query.toLowerCase();
       const results: SearchResult[] = [];
+      const addedArticleHrefs = new Set<string>(); // Para evitar duplicatas se sub-artigo e módulo derem match
 
-      // Buscar em Artigos (títulos e tags dos sub-artigos)
+      // Buscar em Artigos (títulos e tags dos MÓDULOS e SUB-ARTIGOS)
       mockArticleModules.forEach((module) => {
-        module.subArticles.forEach((sub) => {
-          if (
-            sub.title.toLowerCase().includes(lowerQuery) ||
-            sub.tags?.some((tag) => tag.toLowerCase().includes(lowerQuery)) ||
-            module.title.toLowerCase().includes(lowerQuery) // Buscar no título do módulo também
-          ) {
+        // Verificar se o MÓDULO corresponde (título ou tag)
+        const moduleMatches = 
+          module.title.toLowerCase().includes(lowerQuery) ||
+          module.tags?.some((tag) => tag.toLowerCase().includes(lowerQuery));
+
+        // Se o módulo corresponde, adiciona o link para o primeiro sub-artigo (se ainda não adicionado)
+        if (moduleMatches) {
+          const href = `/articles/${module.slug}/${module.subArticles[0].slug}`;
+          if (!addedArticleHrefs.has(href)) {
             results.push({
               type: "article",
-              title: `${module.title}: ${sub.title}`,
-              href: `/articles/${module.slug}/${sub.slug}`,
-              description: `Article in ${module.title}`,
+              title: module.title, // Mostrar título do módulo
+              href: href,
+              description: `Article Module: ${module.description || 'View module'}`,
             });
+            addedArticleHrefs.add(href);
+          }
+        }
+
+        // Verificar se algum SUB-ARTIGO corresponde (título ou tag) - Opcional se busca por módulo é suficiente
+        // Pode levar a muitos resultados, talvez comentar se a busca por módulo for preferível
+        module.subArticles.forEach((sub) => {
+          const subArticleMatches = 
+             sub.title.toLowerCase().includes(lowerQuery) ||
+             sub.tags?.some((tag) => tag.toLowerCase().includes(lowerQuery));
+          
+          if (subArticleMatches) {
+            const href = `/articles/${module.slug}/${sub.slug}`;
+            // Adiciona apenas se o link exato ainda não foi adicionado (evita duplicar se módulo e sub derem match)
+            if (!addedArticleHrefs.has(href)) {
+               results.push({
+                 type: "article",
+                 title: `${module.title}: ${sub.title}`, // Título mais específico
+                 href: href,
+                 description: `Article in ${module.title}`,
+               });
+               addedArticleHrefs.add(href);
+            }
           }
         });
       });
@@ -83,22 +110,26 @@ export const Navbar = () => {
           results.push({
             type: "project",
             title: project.title,
-            href: project.repoUrl, // Link direto para o repo por enquanto
+            href: project.repoUrl, // Link direto para o repo
             description: `Project: ${project.description.substring(0, 50)}...`,
           });
         }
       });
 
-      // Limitar número de resultados (opcional)
-      return results.slice(0, 10);
+      // Remover duplicatas exatas (embora o Set já ajude com artigos)
+      const uniqueResults = results.filter((result, index, self) => 
+        index === self.findIndex((r) => r.href === result.href && r.title === result.title)
+      );
+
+      // Limitar número de resultados
+      return uniqueResults.slice(0, 10);
     };
-  }, []); // Dependência vazia significa que a função é criada apenas uma vez
+  }, []); 
 
   // Atualizar resultados quando a query mudar (com debounce simples)
   useEffect(() => {
     const handler = setTimeout(() => {
       const results = performSearch(searchQuery);
-
       setSearchResults(results);
     }, 200);
 
@@ -187,7 +218,7 @@ export const Navbar = () => {
             placeholder="Search content..."
             variant="bordered"
             size="sm"
-            defaultItems={searchResults}
+            items={searchResults}
             inputValue={searchQuery}
             onInputChange={setSearchQuery}
             onSelectionChange={handleSelectionChange}
@@ -248,10 +279,10 @@ export const Navbar = () => {
           <Button
             isExternal
             as={Link}
-            className="text-sm font-normal text-default-600"
+            className="text-sm font-normal text-default-600 bg-default-100"
             href={siteConfig.links.sponsor}
             startContent={<HeartFilledIcon className="text-danger" />}
-            variant="light"
+            variant="flat"
           >
             Sponsor
           </Button>
@@ -285,6 +316,29 @@ export const Navbar = () => {
               </Link>
             </NavbarMenuItem>
           ))}
+           {/* Adicionar busca ao menu mobile */}
+           <NavbarMenuItem className="mt-4">
+             <Autocomplete
+                aria-label="Search Mobile"
+                placeholder="Search content..."
+                variant="bordered"
+                size="sm"
+                items={searchResults}
+                inputValue={searchQuery}
+                onInputChange={setSearchQuery}
+                onSelectionChange={handleSelectionChange}
+                inputProps={{ /* startContent etc. como no desktop */ }}
+                listboxProps={{ /* ... */ }}
+                popoverProps={{ /* ... */ }}
+              >
+                 {(item) => (
+                   <AutocompleteItem key={item.href} textValue={item.title}>
+                      {/* ... layout do item ... */}
+                      {item.title}
+                   </AutocompleteItem>
+                 )}
+              </Autocomplete>
+           </NavbarMenuItem>
         </div>
       </NavbarMenu>
     </HeroUINavbar>
