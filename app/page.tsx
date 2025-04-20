@@ -16,19 +16,17 @@ export default function Home() {
   const latestProjects = mockPortfolioProjects.slice(0, 3); // Pegar os 3 primeiros projetos
 
   return (
-    <section className="flex flex-col items-center justify-center gap-16 md:gap-20 py-8 md:py-10">
-      {/* Espaço para Logo */}
-      <div className="mb-4">
-        {" "}
-        {/* Adicionar margem abaixo */}
-        {/* TODO: Adicionar componente <Image> do Next.js ou <img> aqui */}
-        <div className="w-32 h-32 bg-default-200 dark:bg-default-100 rounded-full flex items-center justify-center text-default-500">
-          (Logo)
+    <section className="flex flex-col items-center justify-center gap-16 md:gap-28 py-8 md:py-10">
+      {/* Mover Logo e Botões para dentro da Div Hero */}
+      <div className="max-w-3xl text-center justify-center flex flex-col items-center">
+        {/* Logo Placeholder com margem inferior */}
+        <div className="mb-6">
+          <div className="w-32 h-32 bg-default-200 dark:bg-default-100 rounded-full flex items-center justify-center text-default-500">
+            (Logo)
+          </div>
         </div>
-      </div>
 
-      {/* Seção Hero */}
-      <div className="inline-block max-w-3xl text-center justify-center">
+        {/* Títulos H1/H2 */}
         <h1 className={title()}>Welcome to&nbsp;</h1>
         <h1 className={title({ color: "violet" })}>NullUnit&nbsp;</h1>
         <br />
@@ -36,29 +34,30 @@ export default function Home() {
           Your hub for cybersecurity knowledge sharing, CTF strategies, bug
           bounty insights, and collaborative research.
         </h2>
-      </div>
 
-      {/* Botões de Ação (Exemplo) */}
-      <div className="flex gap-3">
-        <Button
-          as={NextLink}
-          color="primary"
-          href="/articles"
-          size="lg"
-          variant="solid"
-        >
-          Explore Articles
-        </Button>
-        <Button
-          as={NextLink}
-          color="primary"
-          href="/about"
-          size="lg"
-          variant="bordered"
-        >
-          Learn More
-        </Button>
+        {/* Botões com margem superior */}
+        <div className="flex gap-3 mt-8">
+          <Button
+            as={NextLink}
+            color="primary"
+            href="/articles"
+            size="lg"
+            variant="solid"
+          >
+            Explore Articles
+          </Button>
+          <Button
+            as={NextLink}
+            color="primary"
+            href="/about"
+            size="lg"
+            variant="bordered"
+          >
+            Learn More
+          </Button>
+        </div>
       </div>
+      {/* Fim da Div Hero */}
 
       {/* Seção Últimos Artigos */}
       <div className="w-full max-w-5xl">
