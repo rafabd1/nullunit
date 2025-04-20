@@ -123,13 +123,16 @@ export const ArticleClientContent = ({
       {/* Conteúdo Principal */}
       <article className="w-full md:w-3/4 lg:w-4/5">
         <h1 className="text-3xl md:text-4xl font-bold mb-2">{subArticle.title}</h1>
-        {/* Metadados */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-6 text-sm text-default-600">
+        {/* Metadados com alinhamento corrigido */}
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-2 mb-6 text-sm text-default-600">
           {subArticle.author && (
             <span>By {subArticle.author}</span>
           )}
+          {subArticle.author && subArticle.publishedDate && (
+            <span className="mx-1">•</span> // Span separado para o ponto com margem horizontal
+          )}
           {subArticle.publishedDate && (
-            <span>• Published on {new Date(subArticle.publishedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+            <span>Published on {new Date(subArticle.publishedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
           )}
         </div>
         {subArticle.tags && subArticle.tags.length > 0 && (
