@@ -42,7 +42,7 @@ export default function Home() {
       <div className="w-full max-w-5xl">
         <h3 className="text-2xl font-semibold mb-6 text-center flex items-center justify-center gap-2">
           <Newspaper className="text-primary" size={24} strokeWidth={1.5} />
-          Latest Articles & Tutorials
+          Latest Articles & Write-Ups
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {latestModules.map((module) => (
