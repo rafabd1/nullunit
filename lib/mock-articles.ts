@@ -6,6 +6,7 @@ export const mockArticleModules: ArticleModule[] = [
     slug: 'sql-injection-basics',
     title: 'SQL Injection: Fundamentals',
     description: 'Learn the basic concepts and most common types of SQL Injection.',
+    tags: ['SQL Injection', 'Web Security', 'Database', 'Beginner'],
     subArticles: [
       {
         slug: 'introduction',
@@ -54,6 +55,7 @@ How to exploit database errors to infer information.
     slug: 'cross-site-scripting',
     title: 'Cross-Site Scripting (XSS)',
     description: 'Understand the different types of XSS and how to prevent attacks.',
+    tags: ['XSS', 'Web Security', 'Frontend', 'JavaScript'],
     subArticles: [
       {
         slug: 'reflected-xss',
