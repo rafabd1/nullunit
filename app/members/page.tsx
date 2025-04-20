@@ -46,23 +46,26 @@ export default function MembersPage() {
                 color="primary"
               />
             </CardHeader>
-            <CardBody className="pt-0">
+            <CardBody className="pt-0 px-4 text-center">
               <h4 className="font-bold text-large mb-1">{member.name}</h4>
               <p className="text-default-500 text-sm mb-2">{member.role}</p>
-              <p className="text-sm text-default-600 text-left px-2">{member.bio}</p> 
+              <p className="text-sm text-default-600">{member.bio}</p>
             </CardBody>
-            <CardFooter className="justify-center gap-3 pb-3">
-              {member.socialLinks?.map((link) => (
-                <Link 
-                  key={link.platform} 
-                  isExternal 
-                  href={link.url} 
-                  aria-label={`${member.name} on ${link.platform}`}
-                >
-                  <SocialIcon platform={link.platform} />
-                </Link>
-              ))}
-              {/* Link para o perfil completo (se existir) */}
+            <CardFooter className="flex-col items-center pb-4">
+              {/* Container para ícones sociais */}
+              <div className="flex justify-center gap-2 mb-3">
+                {member.socialLinks?.map((link) => (
+                  <Link 
+                    key={link.platform} 
+                    isExternal 
+                    href={link.url} 
+                    aria-label={`${member.name} on ${link.platform}`}
+                  >
+                    <SocialIcon platform={link.platform} />
+                  </Link>
+                ))}
+              </div>
+              {/* Link para o perfil completo */}
               <Link as={NextLink} href={`/members/${member.username}`} color="primary" size="sm">
                 View Profile
               </Link>

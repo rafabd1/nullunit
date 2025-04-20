@@ -1,5 +1,6 @@
 /* eslint-disable prettier/prettier */
 import { notFound } from "next/navigation";
+
 import { mockArticleModules } from "@/lib/mock-articles";
 import { ArticleModule, SubArticle } from "@/types/article";
 // Remover import dinâmico daqui
