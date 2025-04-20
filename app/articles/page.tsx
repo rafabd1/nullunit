@@ -1,8 +1,3 @@
-/* eslint-disable prettier/prettier */
-import { Link } from "@heroui/link";
-import NextLink from "next/link";
-
-// Importar os dados mock
 import { mockArticleModules } from "@/lib/mock-articles";
 import { ContentCard } from "@/components/content-card"; // Importar ContentCard
 
