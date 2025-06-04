@@ -1,13 +1,5 @@
 /* eslint-disable prettier/prettier */
-
-// Representa uma tag individual
-export interface Tag {
-  id: string; // UUID da tag
-  name: string; // Nome da tag (ex: 'Cibersegurança')
-  slug: string; // Slug da tag (ex: 'ciberseguranca')
-  created_at?: string;
-  updated_at?: string;
-}
+import { Tag } from './tag'; // Importar Tag do novo arquivo
 
 // Representa um artigo simplificado, alinhado com o backend
 export interface Article {

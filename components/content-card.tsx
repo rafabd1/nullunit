@@ -8,7 +8,7 @@ import { Tag } from '@/types/article'; // Importar o tipo Tag
 
 interface ContentCardProps {
   type: 'article' | 'project';
-  slug: string;
+  slug: string; // Slug do conteúdo principal (artigo ou projeto)
   title: string;
   description?: string;
   tags?: Tag[]; // Alterado de string[] para Tag[]
@@ -29,41 +29,42 @@ export const ContentCard: React.FC<ContentCardProps> = ({
   const chipColor = type === 'article' ? 'primary' : 'secondary';
 
   return (
-    <Card key={slug} shadow="sm">
-      <CardHeader className="pb-0 pt-2 px-4 flex-col items-start">
-        <h4 className="font-bold text-large mb-1">{title}</h4>
+    <Card key={slug} shadow="sm" className="bg-content1 dark:bg-content1-dark h-full flex flex-col">
+      <CardHeader className="pb-0 pt-4 px-4 flex-col items-start">
+        <h4 className="font-bold text-large mb-1 line-clamp-2">{title}</h4>
         {description && (
-          <p className="text-sm text-default-600 mb-2 line-clamp-3">
+          <p className="text-sm text-default-600 dark:text-default-400 mb-2 line-clamp-3 flex-grow">
             {description}
           </p>
         )}
       </CardHeader>
-      <CardBody className="pt-0">
+      <CardBody className="pt-2 pb-2 px-4 flex-grow">
         {tags && tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-2">
             {tags.map((tag) => (
               <Chip
-                key={tag.id} // Usar tag.id ou tag.slug como chave
+                key={tag.id} // Revertido para tag.id, pois slug pode não estar presente
                 color={chipColor}
                 size="sm"
                 variant="flat"
+                className="cursor-default"
               >
-                {tag.name} {/* Usar tag.name para exibir o nome da tag */}
+                {tag.name}
               </Chip>
             ))}
           </div>
         )}
       </CardBody>
-      <CardFooter className="justify-start">
+      <CardFooter className="justify-start px-4 pb-4 pt-0 mt-auto">
         <Link
           as={!isExternalLink ? NextLink : undefined}
           isExternal={isExternalLink}
-          className={isExternalLink ? "text-default-600 hover:text-primary" : undefined}
-          color={isExternalLink ? "foreground" : "primary"}
+          showAnchorIcon={isExternalLink}
           href={href}
           size="sm"
+          color={isExternalLink ? "foreground" : "primary"}
+          className={isExternalLink ? "text-default-600 hover:text-primary dark:text-default-400 dark:hover:text-primary-dark font-medium" : "font-medium"}
         >
-          {isExternalLink && <GithubIcon className="mr-1" size={16} />}
           {linkText}
         </Link>
       </CardFooter>

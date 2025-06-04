@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { Tag } from './article'; // Importando o tipo Tag existente
+import { Tag } from './tag'; // Corrigido para importar de ./tag
 
 // Representa uma lição dentro de um módulo de curso
 export interface Lesson {
@@ -13,6 +13,7 @@ export interface Lesson {
   // Campos adicionais, se necessário:
   // video_url?: string;
   // duration_minutes?: number;
+  slug?: string; // Adicionado slug para lições, conforme usado nas rotas
 }
 
 // Representa um módulo dentro de um curso
