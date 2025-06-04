@@ -1,19 +1,29 @@
 'use client'; // Este é agora um Componente de Cliente
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Button } from '@heroui/button';
 import { Copy, Check } from 'lucide-react';
 import { Chip } from '@heroui/chip';
-import { User } from '@heroui/user';
+// import { User } from '@heroui/user'; // Remover se não for usado para autor
 import NextLink from 'next/link';
 import { Link } from '@heroui/link';
 import clsx from 'clsx';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 
-// --- Componente Customizado CodeBlock (igual ao anterior) --- 
+// Importar os novos tipos
+import { Article, Tag } from '@/types/article';
+
+// Estrutura para um item da Tabela de Conteúdos (ToC)
+interface TocEntry {
+  id: string;
+  level: number; // ex: 1 para h1, 2 para h2
+  text: string;
+}
+
+// --- Componente Customizado CodeBlock (mantido igual) --- 
 const CodeBlock = ({ node, inline, className, children, ...props }: any) => {
   const [isCopied, setIsCopied] = useState(false);
   const match = /language-(\w+)/.exec(className || '');
@@ -71,88 +81,181 @@ const CodeBlock = ({ node, inline, className, children, ...props }: any) => {
   );
 };
 
-// --- Props para o componente cliente --- 
+// Função para gerar slug a partir de texto (simples)
+const generateSlug = (text: string) => {
+  return String(text)
+    .toLowerCase()
+    .replace(/\s+/g, '-') // Substituir espaços por hífens
+    .replace(/[^\w\-]+/g, ''); // Remover caracteres não alfanuméricos (exceto hífen)
+};
+
+
+// --- Props para o componente cliente (atualizadas) --- 
 interface ArticleClientContentProps {
-  module: ArticleModule;
-  subArticle: SubArticle;
-  moduleSlug: string;
-  subArticleSlug: string;
+  article: Article;
 }
 
 // --- Componente que renderiza o conteúdo do artigo --- 
-export const ArticleClientContent = ({ 
-  module, 
-  subArticle, 
-  moduleSlug, 
-  subArticleSlug 
-}: ArticleClientContentProps) => {
+export const ArticleClientContent = ({ article }: ArticleClientContentProps) => {
   const [isMounted, setIsMounted] = useState(false);
+  const [activeTocId, setActiveTocId] = useState<string | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
+  // Memoizar a extração de ToC para evitar re-cálculos desnecessários
+  const tocEntries = useMemo<TocEntry[]>(() => {
+    if (!isMounted || !article.content) return []; // Só processa no cliente e se tiver conteúdo
+    
+    const headings: TocEntry[] = [];
+    // Regex simples para capturar h1, h2, h3. Pode ser melhorado ou substituído por parsing de Markdown.
+    const headingRegex = /^(#{1,3})\s+(.*)$/gm;
+    let match;
+    while ((match = headingRegex.exec(article.content)) !== null) {
+      const level = match[1].length; // #{1,3} -> nível 1, 2 ou 3
+      const text = match[2].trim();
+      const id = generateSlug(text); 
+      headings.push({ id, level, text });
+    }
+    return headings;
+  }, [article.content, isMounted]);
+
+  // Efeito para observar os elementos de cabeçalho e atualizar o ToC ativo
+  useEffect(() => {
+    if (!isMounted || tocEntries.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            setActiveTocId(entry.target.id);
+          }
+        });
+      },
+      { rootMargin: "0px 0px -75% 0px" } // Ativa quando o cabeçalho está no topo 25% da viewport
+    );
+
+    tocEntries.forEach(toc => {
+      const element = document.getElementById(toc.id);
+      if (element) observer.observe(element);
+    });
+
+    return () => {
+      tocEntries.forEach(toc => {
+        const element = document.getElementById(toc.id);
+        if (element) observer.unobserve(element);
+      });
+    };
+  }, [isMounted, tocEntries]);
+
+
+  const handleTocClick = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  // Custom renderer para cabeçalhos para injetar IDs
+  const headingRenderer = ({ level, children }: { level: number; children: React.ReactNode[] }) => {
+    const text = children.map(c => typeof c === 'string' ? c : '').join('');
+    const id = generateSlug(text);
+    
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [_isReactText, ...actualChildren] = children; // Para evitar erro de tipo de ReactText vs ReactNode
+
+    switch (level) {
+      case 1:
+        return <h1 id={id}>{actualChildren}</h1>;
+      case 2:
+        return <h2 id={id}>{actualChildren}</h2>;
+      case 3:
+        return <h3 id={id}>{actualChildren}</h3>;
+      // Adicione mais casos se precisar de h4, h5, h6
+      default:
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore // Permite que o React renderize children normalmente para outros níveis
+        return React.createElement(`h${level}`, { id }, actualChildren);
+    }
+  };
+
+  if (!isMounted) {
+    // Pode retornar um loader ou null enquanto não estiver montado para evitar hydration mismatch
+    // especialmente se o ToC depende de cálculos no cliente.
+    return null; 
+  }
+
   return (
-    <div className="flex flex-col md:flex-row gap-8">
-      {/* Sidebar */}
-      <aside className="w-full md:w-1/4 lg:w-1/5 flex-shrink-0">
-        <h3 className="text-lg font-semibold mb-4">{module.title}</h3>
-        <nav>
-          <ul>
-            {module.subArticles.map((sa) => (
-              <li key={sa.slug} className="mb-2">
-                <Link
-                  as={NextLink}
-                  href={`/articles/${moduleSlug}/${sa.slug}`}
-                  className={clsx(
-                    'block px-3 py-1 rounded hover:bg-default-100',
-                    {
-                      'bg-primary text-primary-foreground font-medium': sa.slug === subArticleSlug,
-                      'text-default-700': sa.slug !== subArticleSlug
-                    }
-                  )}
-                >
-                  {sa.title}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      </aside>
+    <div className="flex flex-col md:flex-row gap-x-8 gap-y-4 w-full">
+      {/* Sidebar para ToC */}
+      {tocEntries.length > 0 && (
+        <aside className="w-full md:w-1/4 lg:w-1/5 md:sticky md:top-24 self-start flex-shrink-0 order-last md:order-first">
+          <h3 className="text-base font-semibold mb-3 tracking-tight">Nesta página</h3>
+          <nav>
+            <ul className="space-y-1.5">
+              {tocEntries.map((entry) => (
+                <li key={entry.id} style={{ marginLeft: `${(entry.level - 1) * 0.75}rem` }}>
+                  <Link
+                    href={`#${entry.id}`}
+                    onClick={(e) => {
+                        e.preventDefault();
+                        handleTocClick(entry.id);
+                    }}
+                    className={clsx(
+                      'block text-sm hover:text-primary transition-colors',
+                      {
+                        'text-primary font-medium': entry.id === activeTocId,
+                        'text-default-600 hover:text-default-900': entry.id !== activeTocId
+                      }
+                    )}
+                  >
+                    {entry.text}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </aside>
+      )}
 
       {/* Conteúdo Principal */}
-      <article className="w-full md:w-3/4 lg:w-4/5">
-        <h1 className="text-3xl md:text-4xl font-bold mb-2">{subArticle.title}</h1>
-        {/* Metadados com alinhamento corrigido */}
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-2 mb-6 text-sm text-default-600">
-          {subArticle.author && (
-            <span>By {subArticle.author}</span>
-          )}
-          {subArticle.author && subArticle.publishedDate && (
-            <span className="mx-1">•</span> // Span separado para o ponto com margem horizontal
-          )}
-          {subArticle.publishedDate && (
-            <span>Published on {new Date(subArticle.publishedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-          )}
+      <article className={clsx(
+        "w-full",
+        tocEntries.length > 0 ? "md:w-3/4 lg:w-4/5" : "max-w-full" // Ocupa mais espaço se não houver ToC
+      )}>
+        <h1 className="text-3xl md:text-4xl font-bold mb-2 tracking-tight leading-tight">{article.title}</h1>
+        
+        {/* Metadados */}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-6 text-sm text-default-600">
+          {/* Autor: Placeholder ou buscar e exibir nome do autor se necessário */}
+          {/* <span>By Member: {article.member_id}</span> */}
+          <span>Publicado em {new Date(article.created_at).toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
         </div>
-        {subArticle.tags && subArticle.tags.length > 0 && (
+
+        {article.tags && article.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-8">
-            {subArticle.tags.map((tag) => (
-              <Chip key={tag} color="primary" variant="flat" size="sm">
-                {tag}
+            {article.tags.map((tag) => (
+              <Chip key={tag.id} color="primary" variant="flat" size="sm" as={NextLink} href={`/tags/${tag.slug}`}>
+                {tag.name}
               </Chip>
             ))}
           </div>
         )}
-        {/* Markdown com CodeBlock */}
+        
+        {/* Conteúdo Markdown */}
         <div className="prose dark:prose-invert max-w-none">
           <ReactMarkdown 
             remarkPlugins={[remarkGfm]}
             components={{
               code: CodeBlock,
+              h1: (props) => headingRenderer({ ...props, level: 1 }),
+              h2: (props) => headingRenderer({ ...props, level: 2 }),
+              h3: (props) => headingRenderer({ ...props, level: 3 }),
+              // Adicione h4, h5, h6 se necessário
             }}
           >
-            {subArticle.content}
+            {article.content}
           </ReactMarkdown>
         </div>
       </article>

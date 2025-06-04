@@ -1,7 +1,8 @@
 'use client'; // Este loader precisa ser cliente para usar dynamic com ssr: false
 
 import dynamic from 'next/dynamic';
-import { ArticleModule, SubArticle } from '@/types/article'; // Importar tipos
+// Importar o novo tipo Article e remover os antigos
+import { Article } from '@/types/article';
 
 // Importar dinamicamente o componente de conteúdo real
 const ArticleClientContent = dynamic(
@@ -13,15 +14,18 @@ const ArticleClientContent = dynamic(
   }
 );
 
-// Props que o loader recebe da página do servidor
+// Props que o loader recebe da página do servidor atualizadas
 interface DynamicArticleLoaderProps {
-  module: ArticleModule;
-  subArticle: SubArticle;
-  moduleSlug: string;
-  subArticleSlug: string;
+  article: Article; // Agora recebe o objeto Article completo
+  // Props antigas removidas:
+  // module: ArticleModule;
+  // subArticle: SubArticle;
+  // moduleSlug: string;
+  // subArticleSlug: string;
 }
 
-// Componente que apenas carrega dinamicamente e passa as props
+// Componente que apenas carrega dinamicamente e passa as props atualizadas
 export const DynamicArticleLoader = (props: DynamicArticleLoaderProps) => {
-  return <ArticleClientContent {...props} />;
+  // Passar o objeto article para ArticleClientContent
+  return <ArticleClientContent article={props.article} />;
 }; 

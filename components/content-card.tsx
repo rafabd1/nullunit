@@ -4,13 +4,14 @@ import { Card, CardHeader, CardBody, CardFooter } from "@heroui/card";
 import { Chip } from "@heroui/chip";
 import { Link } from "@heroui/link";
 import { GithubIcon } from "@/components/icons"; // Icone para projetos
+import { Tag } from '@/types/article'; // Importar o tipo Tag
 
 interface ContentCardProps {
   type: 'article' | 'project';
   slug: string;
   title: string;
   description?: string;
-  tags?: string[];
+  tags?: Tag[]; // Alterado de string[] para Tag[]
   href: string; // URL de destino (interna ou externa)
   linkText: string; // Texto do link (ex: "Read Article", "View on GitHub")
 }
@@ -32,7 +33,7 @@ export const ContentCard: React.FC<ContentCardProps> = ({
       <CardHeader className="pb-0 pt-2 px-4 flex-col items-start">
         <h4 className="font-bold text-large mb-1">{title}</h4>
         {description && (
-          <p className="text-sm text-default-600 mb-2">
+          <p className="text-sm text-default-600 mb-2 line-clamp-3">
             {description}
           </p>
         )}
@@ -42,12 +43,12 @@ export const ContentCard: React.FC<ContentCardProps> = ({
           <div className="flex flex-wrap gap-1 mb-2">
             {tags.map((tag) => (
               <Chip
-                key={tag}
+                key={tag.id} // Usar tag.id ou tag.slug como chave
                 color={chipColor}
                 size="sm"
                 variant="flat"
               >
-                {tag}
+                {tag.name} {/* Usar tag.name para exibir o nome da tag */}
               </Chip>
             ))}
           </div>

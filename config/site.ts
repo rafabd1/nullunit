@@ -10,23 +10,18 @@ export const siteConfig = {
       href: "/articles",
     },
     {
+      label: "Courses",
+      href: "/courses",
+    },
+    {
       label: "Portfolio",
       href: "/portfolio",
-    },
-    {
-      label: "Members",
-      href: "/members",
-    },
-    {
-      label: "About",
-      href: "/about",
     },
   ],
   navMenuItems: [
     { label: "Articles", href: "/articles" },
+    { label: "Courses", href: "/courses" },
     { label: "Portfolio", href: "/portfolio" },
-    { label: "Members", href: "/members" },
-    { label: "About", href: "/about" },
   ],
   links: {
     github: "https://github.com/nullunit-org",

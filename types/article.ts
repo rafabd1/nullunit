@@ -1,27 +1,28 @@
 /* eslint-disable prettier/prettier */
-export interface SubArticle {
-  slug: string; // Identificador único para URL (ex: 'introducao-sql-injection')
-  title: string; // Título do sub-artigo
-  // O conteúdo pode ser string (Markdown/MDX) ou outro formato
-  content: string;
-  // Metadados adicionados
-  author?: string; // Nome do autor ou username
-  publishedDate?: string; // Data no formato YYYY-MM-DD ou outro
-  tags?: string[]; // Lista de tags
-  description?: string; // Adicionado para resumos opcionais
-  // Campos opcionais (podemos adicionar depois)
-  // author?: string;
-  // publishedDate?: string;
-  // tags?: string[];
+
+// Representa uma tag individual
+export interface Tag {
+  id: string; // UUID da tag
+  name: string; // Nome da tag (ex: 'Cibersegurança')
+  slug: string; // Slug da tag (ex: 'ciberseguranca')
+  created_at?: string;
+  updated_at?: string;
 }
 
-export interface ArticleModule {
-  slug: string; // Identificador único para URL do módulo (ex: 'sql-injection')
-  title: string; // Título do módulo (ex: 'SQL Injection Completo')
-  description?: string; // Descrição curta do módulo (opcional)
-  tags?: string[]; // Adicionar tags ao módulo
-  subArticles: SubArticle[]; // Lista de sub-artigos dentro do módulo
-  // Campos opcionais
-  // category?: string;
-  // level?: 'beginner' | 'intermediate' | 'advanced';
+// Representa um artigo simplificado, alinhado com o backend
+export interface Article {
+  id: string; // UUID
+  created_at: string;
+  updated_at: string;
+  slug: string; // Slug único para URL
+  title: string; // Título do artigo
+  description?: string | null; // Sumário opcional do artigo
+  content: string; // Conteúdo completo do artigo (Markdown/MDX)
+  member_id: string; // UUID do autor (Member)
+  published: boolean; // Se o artigo está publicado
+  verified?: boolean; // Se o artigo foi verificado (opcional no frontend por enquanto)
+  tags?: Tag[]; // Lista de tags associadas
+  // Adicionar outros campos conforme necessário, ex:
+  // author_username?: string; // Se quisermos mostrar o nome do autor diretamente
+  // views?: number;
 }
