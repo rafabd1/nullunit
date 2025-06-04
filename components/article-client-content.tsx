@@ -89,6 +89,26 @@ const generateSlug = (text: string) => {
     .replace(/[^\w\-]+/g, ''); // Remover caracteres não alfanuméricos (exceto hífen)
 };
 
+// Função auxiliar para extrair texto de ReactNode
+const getNodeText = (node: React.ReactNode): string => {
+  if (Array.isArray(node)) {
+    return node.map(getNodeText).join('');
+  }
+  if (typeof node === 'string' || typeof node === 'number') {
+    return String(node);
+  }
+  if (React.isValidElement(node) && node.props && node.props.children) {
+    return getNodeText(node.props.children);
+  }
+  return '';
+};
+
+// Componente customizado para renderizar cabeçalhos com IDs
+const CustomHeading = ({ level, children }: { level: number; children: React.ReactNode }) => {
+  const text = getNodeText(children);
+  const id = generateSlug(text);
+  return React.createElement(`h${level}`, { id }, children);
+};
 
 // --- Props para o componente cliente (atualizadas) --- 
 interface ArticleClientContentProps {
@@ -154,29 +174,6 @@ export const ArticleClientContent = ({ article }: ArticleClientContentProps) => 
     const element = document.getElementById(id);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
-
-  // Custom renderer para cabeçalhos para injetar IDs
-  const headingRenderer = ({ level, children }: { level: number; children: React.ReactNode[] }) => {
-    const text = children.map(c => typeof c === 'string' ? c : '').join('');
-    const id = generateSlug(text);
-    
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [_isReactText, ...actualChildren] = children; // Para evitar erro de tipo de ReactText vs ReactNode
-
-    switch (level) {
-      case 1:
-        return <h1 id={id}>{actualChildren}</h1>;
-      case 2:
-        return <h2 id={id}>{actualChildren}</h2>;
-      case 3:
-        return <h3 id={id}>{actualChildren}</h3>;
-      // Adicione mais casos se precisar de h4, h5, h6
-      default:
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore // Permite que o React renderize children normalmente para outros níveis
-        return React.createElement(`h${level}`, { id }, actualChildren);
     }
   };
 
@@ -249,9 +246,9 @@ export const ArticleClientContent = ({ article }: ArticleClientContentProps) => 
             remarkPlugins={[remarkGfm]}
             components={{
               code: CodeBlock,
-              h1: (props) => headingRenderer({ ...props, level: 1 }),
-              h2: (props) => headingRenderer({ ...props, level: 2 }),
-              h3: (props) => headingRenderer({ ...props, level: 3 }),
+              h1: (props) => <CustomHeading level={1} {...props} />,
+              h2: (props) => <CustomHeading level={2} {...props} />,
+              h3: (props) => <CustomHeading level={3} {...props} />,
               // Adicione h4, h5, h6 se necessário
             }}
           >
