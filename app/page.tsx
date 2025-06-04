@@ -1,102 +1,178 @@
 import { Link } from "@heroui/link";
 import { Button } from "@heroui/button";
 import NextLink from "next/link";
-import { Newspaper, FolderGit2 } from "lucide-react";
+import { Newspaper, FolderGit2, BookMarkedIcon } from "lucide-react";
 
 import { title, subtitle } from "@/components/primitives";
-import { mockArticleModules } from "@/lib/mock-articles";
-import { mockPortfolioProjects } from "@/lib/mock-portfolio";
-import { ContentCard } from "@/components/content-card"; // Importar ContentCard
+import { ContentCard } from "@/components/content-card";
+import { CourseCard } from "@/components/CourseCard"; // Importar CourseCard
 
-export default function Home() {
-  // Pegar os 2 módulos mais recentes (ou primeiros)
-  const latestModules = mockArticleModules.slice(0, 2); 
-  const latestProjects = mockPortfolioProjects.slice(0, 3);
+import { Article } from "@/types/article";
+import { PortfolioProject } from "@/types/portfolio";
+import { Course } from "@/types/course";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
+
+async function getLatestArticles(limit: number = 2): Promise<Article[]> {
+  try {
+    // Adicionar ?limit=X se o backend suportar, caso contrário, buscar todos e fatiar
+    const res = await fetch(`${API_BASE_URL}/api/articles?limit=${limit}`, { next: { revalidate: 3600 } }); // Revalidar a cada hora
+    if (!res.ok) {
+      console.error("Failed to fetch articles:", res.status, res.statusText);
+      return [];
+    }
+    const articles: Article[] = await res.json();
+    // Se o backend não suportar limit, fatiar aqui:
+    // return articles.slice(0, limit);
+    return articles; // Assumindo que o backend lida com o limite
+  } catch (error) {
+    console.error("Error fetching articles:", error);
+    return [];
+  }
+}
+
+async function getRecentProjects(limit: number = 3): Promise<PortfolioProject[]> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/portfolio?limit=${limit}`, { next: { revalidate: 3600 } });
+    if (!res.ok) {
+      console.error("Failed to fetch projects:", res.status, res.statusText);
+      return [];
+    }
+    const projects: PortfolioProject[] = await res.json();
+    return projects;
+  } catch (error) {
+    console.error("Error fetching projects:", error);
+    return [];
+  }
+}
+
+async function getFeaturedCourses(limit: number = 3): Promise<Course[]> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/courses?limit=${limit}`, { next: { revalidate: 3600 } });
+    if (!res.ok) {
+      console.error("Failed to fetch courses:", res.status, res.statusText);
+      return [];
+    }
+    const courses: Course[] = await res.json();
+    return courses;
+  } catch (error) {
+    console.error("Error fetching courses:", error);
+    return [];
+  }
+}
+
+
+export default async function Home() {
+  const latestArticles = await getLatestArticles(2);
+  const recentProjects = await getRecentProjects(3);
+  const featuredCourses = await getFeaturedCourses(3);
 
   return (
-    <section className="flex flex-col items-center justify-center gap-16 md:gap-28 py-8 md:py-10">
+    <section className="flex flex-col items-center justify-center gap-16 md:gap-24 py-8 md:py-10">
       {/* Hero Section */}
       <div className="max-w-3xl text-center justify-center flex flex-col items-center">
-        {/* Logo Placeholder */}
         <div className="mb-6">
-          <div className="w-32 h-32 bg-default-200 dark:bg-default-100 rounded-full flex items-center justify-center text-default-500">
-            (Logo)
+          {/* <Logo size={80} /> // Se tiver um componente Logo */}
+          <div className="w-32 h-32 bg-default-200 dark:bg-default-800 rounded-full flex items-center justify-center text-default-500 dark:text-default-300 text-4xl font-bold">
+            NU
           </div>
         </div>
-        {/* Títulos */}
-        <h1 className={title()}>Welcome to&nbsp;</h1>
+        <h1 className={title()}>Bem-vindo à&nbsp;</h1>
         <h1 className={title({ color: "violet" })}>NullUnit&nbsp;</h1>
         <br />
         <h2 className={subtitle({ class: "mt-4" })}>
-          Your hub for cybersecurity knowledge sharing, CTF strategies, bug
-          bounty insights, and collaborative research.
+          Sua plataforma de aprendizado e colaboração em cibersegurança. Explore artigos, cursos e ferramentas.
         </h2>
-        {/* Botões */}
-        <div className="flex gap-3 mt-8">
-          <Button as={NextLink} color="primary" href="/articles" size="lg" variant="solid">Explore Articles</Button>
-          <Button as={NextLink} color="primary" href="/about" size="lg" variant="bordered">Learn More</Button>
+        <div className="flex flex-wrap gap-3 mt-8 justify-center">
+          <Button as={NextLink} color="primary" href="/articles" size="lg" variant="solid">
+            Explorar Artigos
+          </Button>
+          <Button as={NextLink} color="default" href="/courses" size="lg" variant="solid">
+            Ver Cursos
+          </Button>
+          <Button as={NextLink} color="default" href="/portfolio" size="lg" variant="bordered">
+            Nosso Portfólio
+          </Button>
         </div>
       </div>
 
-      {/* Seção Últimos Artigos (Módulos com ContentCard) */}
-      <div className="w-full max-w-5xl">
-        <h3 className="text-2xl font-semibold mb-6 text-center flex items-center justify-center gap-2">
-          <Newspaper className="text-primary" size={24} strokeWidth={1.5} />
-          Latest Articles & Write-Ups
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {latestModules.map((module) => (
-             <ContentCard 
-               key={module.slug} 
-               type="article"
-               slug={module.slug}
-               title={module.title}
-               description={module.description}
-               tags={module.tags} // Usando as tags do módulo
-               href={`/articles/${module.slug}/${module.subArticles[0].slug}`} // Link para o primeiro sub-artigo
-               linkText="Start Reading"
-             />
-          ))}
-        </div>
-        {/* Mostrar link "View All" se houver mais módulos do que o exibido */}
-        {mockArticleModules.length > latestModules.length && (
-          <div className="text-center mt-6">
-            <Link showAnchorIcon as={NextLink} color="primary" href="/articles">
-              View All Articles
+      {/* Seção Últimos Artigos */}
+      {latestArticles.length > 0 && (
+        <div className="w-full max-w-6xl px-4">
+          <h3 className="text-2xl md:text-3xl font-semibold mb-8 text-center flex items-center justify-center gap-2 text-foreground">
+            <Newspaper className="text-primary" size={28} strokeWidth={2} />
+            Artigos Recentes
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {latestArticles.map((article) => (
+              <ContentCard
+                key={article.id}
+                type="article"
+                slug={article.slug}
+                title={article.title}
+                description={article.description || undefined}
+                tags={article.tags}
+                href={`/articles/${article.slug}`}
+                linkText="Ler Artigo"
+              />
+            ))}
+          </div>
+          <div className="text-center mt-8">
+            <Link showAnchorIcon as={NextLink} color="primary" href="/articles" className="text-lg">
+              Ver todos os artigos
             </Link>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Seção Projetos Recentes (com ContentCard) */}
-      <div className="w-full max-w-5xl mb-16 md:mb-64">
-        <h3 className="text-2xl font-semibold mb-6 text-center flex items-center justify-center gap-2">
-          <FolderGit2 className="text-primary" size={24} strokeWidth={1.5} />
-          Recent Projects
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {latestProjects.map((project) => (
-            <ContentCard 
-              key={project.slug}
-              type="project"
-              slug={project.slug}
-              title={project.title}
-              description={project.description}
-              tags={project.tags}
-              href={project.repoUrl}
-              linkText="View on GitHub"
-            />
-          ))}
-        </div>
-        {/* Mostrar link "View All" se houver mais projetos do que o exibido */}
-        {mockPortfolioProjects.length > latestProjects.length && (
-          <div className="text-center mt-6">
-            <Link showAnchorIcon as={NextLink} color="primary" href="/portfolio">
-              View All Projects
+      {/* Seção Cursos em Destaque */}
+      {featuredCourses.length > 0 && (
+        <div className="w-full max-w-6xl px-4">
+          <h3 className="text-2xl md:text-3xl font-semibold mb-8 text-center flex items-center justify-center gap-2 text-foreground">
+            <BookMarkedIcon className="text-primary" size={28} strokeWidth={2} />
+            Cursos em Destaque
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {featuredCourses.map((course) => (
+              <CourseCard key={course.id} course={course} />
+            ))}
+          </div>
+          <div className="text-center mt-8">
+            <Link showAnchorIcon as={NextLink} color="primary" href="/courses" className="text-lg">
+              Ver todos os cursos
             </Link>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Seção Projetos Recentes */}
+      {recentProjects.length > 0 && (
+        <div className="w-full max-w-6xl px-4 mb-16">
+          <h3 className="text-2xl md:text-3xl font-semibold mb-8 text-center flex items-center justify-center gap-2 text-foreground">
+            <FolderGit2 className="text-primary" size={28} strokeWidth={2} />
+            Projetos em Destaque
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {recentProjects.map((project) => (
+              <ContentCard
+                key={project.id}
+                type="project"
+                slug={project.slug}
+                title={project.title}
+                description={project.description}
+                tags={project.tags} // API de portfólio precisa retornar tags com 'id' e 'name'
+                href={project.repo_url}
+                linkText="Ver no GitHub"
+              />
+            ))}
+          </div>
+          <div className="text-center mt-8">
+            <Link showAnchorIcon as={NextLink} color="primary" href="/portfolio" className="text-lg">
+              Ver todos os projetos
+            </Link>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
