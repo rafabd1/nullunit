@@ -44,28 +44,30 @@ export default async function HomePage(): Promise<ReactElement> {
       <HeroSection />
 
       <section>
-        <h2 className="mb-4 text-sm font-medium text-muted-foreground">
-          Featured
-        </h2>
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-             <FeaturedCardLarge
+        <div className="rounded-xl bg-secondary p-6 lg:p-8">
+          <h2 className="mb-6 text-sm font-medium text-muted-foreground">
+            Featured
+          </h2>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <FeaturedCardLarge
                 tag="Course"
                 title={featuredCourse?.title || "Intro to Exploitation"}
                 href={featuredCourse ? `/courses/${featuredCourse.slug}` : "#"}
-             />
-          </div>
-          <div className="flex flex-col gap-6">
-            <FeaturedCardSmall
+              />
+            </div>
+            <div className="flex flex-col gap-6">
+              <FeaturedCardSmall
                 tag="Project"
                 title={featuredProject?.title || "Network Security Tools"}
                 href={featuredProject ? `/portfolio/${featuredProject.slug}` : "#"}
-            />
-            <FeaturedCardSmall
+              />
+              <FeaturedCardSmall
                 tag="Article"
                 title={featuredArticle?.title || "Docker Fundamentals"}
                 href={featuredArticle ? `/articles/${featuredArticle.slug}` : "#"}
-            />
+              />
+            </div>
           </div>
         </div>
       </section>
@@ -103,7 +105,7 @@ function ContentList({
   return (
     <div className="flex flex-col gap-4">
       <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
-      <ul className="flex flex-col gap-3">
+      <ul className="flex flex-col gap-3 list-disc list-inside">
         {items.length > 0 ? (
           items.slice(0, 5).map((item) => (
             <li key={item.id}>

@@ -52,8 +52,8 @@ export const Navbar = () => {
   );
 
   return (
-    <header className="sticky top-0 z-40 w-full rounded-t-xl border-b border-border bg-panel/80 backdrop-blur-sm">
-      <div className="container flex h-16 items-center">
+    <header className="sticky top-0 z-40 w-full rounded-t-xl border-b border-border bg-panel/90 backdrop-blur-md">
+      <div className="container flex h-16 items-center px-6">
         <NextLink href="/" className="flex items-center gap-2">
           <Logo />
           <span className="font-bold">{siteConfig.name}</span>
@@ -113,7 +113,11 @@ export const Navbar = () => {
               </DropdownMenu>
             </Dropdown>
           ) : (
-            <Button as={NextLink} href="/auth/login" variant="ghost">
+            <Button
+              as={NextLink}
+              href="/auth/login"
+              variant="flat"       
+            >
               Login
             </Button>
           )}

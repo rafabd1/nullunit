@@ -40,7 +40,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
       >
         <AuthProvider>
           <div className="p-4 md:p-6 lg:p-8">
-            <div className="mx-auto w-full max-w-7xl rounded-xl border border-border bg-panel">
+            <div className="mx-auto w-full max-w-screen-2xl rounded-xl border border-border bg-panel/30 backdrop-blur-sm">
               <Navbar />
               <main className="p-4 sm:p-6 lg:p-8">
                 {children}
