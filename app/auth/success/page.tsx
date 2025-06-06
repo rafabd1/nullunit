@@ -1,35 +1,42 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
+import React from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Card, CardHeader, CardBody, CardFooter, Button } from '@heroui/react';
+import { CheckCircleIcon } from 'lucide-react';
+
+const successMessages: { [key: string]: string } = {
+  already_verified: 'Your email address was already verified. You can now log in.',
+  default: 'Your email has been successfully verified! You can now proceed.'
+};
 
 /**
  * @description Success page shown after email verification
  */
-export default function AuthSuccess() {
+export default function SuccessPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const message = searchParams.get('message');
+  const messageKey = searchParams.get('message') || 'default';
+  const message = successMessages[messageKey] || successMessages.default;
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold mb-4 text-green-600">
-          {message === 'already_verified' 
-            ? 'Conta já verificada!'
-            : 'Verificação concluída com sucesso!'}
-        </h1>
-        <p className="mb-6">
-          {message === 'already_verified'
-            ? 'Sua conta já estava verificada. Você pode fazer login agora.'
-            : 'Sua conta foi verificada com sucesso. Você já pode fazer login.'}
-        </p>
-        <Link 
-          href="/login" 
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-        >
-          Fazer Login
-        </Link>
-      </div>
+    <div className="flex justify-center items-center h-[calc(100vh-4rem)]">
+      <Card className="w-full max-w-md p-6 text-center">
+        <CardHeader className="justify-center flex-col items-center gap-4">
+          <CheckCircleIcon className="w-12 h-12 text-success" />
+          <h1 className="text-2xl font-bold">Success!</h1>
+        </CardHeader>
+        <CardBody>
+          <p className="text-default-600">
+            {message}
+          </p>
+        </CardBody>
+        <CardFooter>
+            <Button color="primary" onClick={() => router.push('/auth/login')} fullWidth>
+                Go to Login
+            </Button>
+        </CardFooter>
+      </Card>
     </div>
   );
 }

@@ -1,50 +1,44 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
+import React from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Card, CardHeader, CardBody, CardFooter, Button } from '@heroui/react';
+import { XCircleIcon } from 'lucide-react';
 
 const errorMessages: { [key: string]: string } = {
-  invalid_parameters: 'Parâmetros de verificação inválidos.',
-  verification_failed: 'Falha na verificação do email.',
-  user_not_found: 'Usuário não encontrado.',
-  username_not_found: 'Nome de usuário não encontrado.',
-  profile_creation_failed: 'Falha ao criar o perfil.',
-  email_not_confirmed: 'Email ainda não confirmado.',
-  unexpected_error: 'Ocorreu um erro inesperado.',
+  invalid_parameters: 'The verification link is missing required parameters. Please try signing up again.',
+  invalid_token: 'The verification token is invalid or has expired. Please try again.',
+  unknown_error: 'An unknown error occurred. Please try again or contact support.',
+  default: 'An unexpected error occurred. Please return to the homepage and try again.'
 };
 
 /**
  * @description Error page shown when authentication fails
  */
-export default function AuthError() {
+export default function ErrorPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const error = searchParams.get('error');
-  const errorMessage = error ? errorMessages[error] || error : 'Ocorreu um erro na autenticação.';
+  const errorKey = searchParams.get('error') || 'default';
+  const message = errorMessages[errorKey] || errorMessages.default;
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold mb-4 text-red-600">
-          Erro na Verificação
-        </h1>
-        <p className="mb-6">
-          {errorMessage}
-        </p>
-        <div className="space-x-4">
-          <Link 
-            href="/signup" 
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-          >
-            Tentar Novamente
-          </Link>
-          <Link 
-            href="/" 
-            className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
-          >
-            Voltar ao Início
-          </Link>
-        </div>
-      </div>
+    <div className="flex justify-center items-center h-[calc(100vh-4rem)]">
+      <Card className="w-full max-w-md p-6 text-center">
+        <CardHeader className="justify-center flex-col items-center gap-4">
+          <XCircleIcon className="w-12 h-12 text-danger" />
+          <h1 className="text-2xl font-bold">Authentication Error</h1>
+        </CardHeader>
+        <CardBody>
+          <p className="text-default-600">
+            {message}
+          </p>
+        </CardBody>
+        <CardFooter>
+            <Button color="primary" onClick={() => router.push('/')} fullWidth>
+                Return to Homepage
+            </Button>
+        </CardFooter>
+      </Card>
     </div>
   );
 }

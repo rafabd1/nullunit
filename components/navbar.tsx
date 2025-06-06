@@ -42,11 +42,16 @@ interface SearchResult {
   description?: string;
 }
 
+import { useAuth } from "@/providers/auth-provider";
+import { Avatar } from "@heroui/avatar";
+import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@heroui/dropdown";
+
 export const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
+  const { user, isLoading } = useAuth();
 
   // Função de busca Memoizada
   const performSearch = useMemo(() => {
@@ -172,6 +177,18 @@ export const Navbar = () => {
     }
   };
 
+  const handleLogout = async () => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
+    const response = await fetch(`${apiUrl}/api/auth/logout`, { 
+      method: 'POST',
+      credentials: 'include',
+    });
+    if (response.ok) {
+      router.push('/');
+      router.refresh(); // Para forçar a atualização do estado no servidor e re-renderizar
+    }
+  };
+
   return (
     <HeroUINavbar maxWidth="xl" position="sticky">
       <NavbarContent className="basis-1/5 sm:basis-full" justify="start">
@@ -275,18 +292,49 @@ export const Navbar = () => {
             K
           </Kbd>
         </NavbarItem>
-        <NavbarItem className="hidden md:flex">
-          <Button
-            isExternal
-            as={Link}
-            className="text-sm font-normal text-default-600 bg-default-100"
-            href={siteConfig.links.sponsor}
-            startContent={<HeartFilledIcon className="text-danger" />}
-            variant="flat"
-          >
-            Sponsor
-          </Button>
-        </NavbarItem>
+        
+        {isLoading ? (
+          <NavbarItem>
+            <div className="w-[36px] h-[36px] bg-default-200 rounded-full animate-pulse" />
+          </NavbarItem>
+        ) : user ? (
+          <Dropdown placement="bottom-end">
+            <DropdownTrigger>
+              <NavbarItem>
+                <Avatar
+                  as="button"
+                  className="transition-transform"
+                  color="secondary"
+                  size="sm"
+                  src={user.user_metadata?.avatar_url || ''} // Usar avatar do supabase se houver
+                  name={user.user_metadata?.username?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
+                />
+              </NavbarItem>
+            </DropdownTrigger>
+            <DropdownMenu aria-label="Profile Actions" variant="flat">
+              <DropdownItem key="profile" className="h-14 gap-2">
+                <p className="font-semibold">Signed in as</p>
+                <p className="font-semibold">{user.user_metadata?.username || user.email}</p>
+              </DropdownItem>
+              <DropdownItem key="dashboard" as={NextLink} href="/dashboard">Dashboard</DropdownItem>
+              <DropdownItem key="settings" as={NextLink} href="/settings">Settings</DropdownItem>
+              <DropdownItem key="logout" color="danger" onClick={handleLogout}>
+                Log Out
+              </DropdownItem>
+            </DropdownMenu>
+          </Dropdown>
+        ) : (
+          <NavbarItem className="hidden md:flex">
+            <Button
+              as={NextLink}
+              className="text-sm font-normal text-default-600 bg-default-100"
+              href="/auth/login"
+              variant="flat"
+            >
+              Login
+            </Button>
+          </NavbarItem>
+        )}
       </NavbarContent>
 
       <NavbarContent className="sm:hidden basis-1 pl-4" justify="end">
