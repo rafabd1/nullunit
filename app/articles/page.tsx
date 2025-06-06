@@ -99,18 +99,13 @@ export default function ArticlesPage() {
       {filteredArticles.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
           {filteredArticles.map((article) => (
-            <ContentCard 
-              key={article.id} 
-              type="article"
-              slug={article.slug} // slug do artigo
+            <ContentCard
+              key={article.id}
+              slug={article.slug}
               title={article.title}
-              description={article.description || undefined} // Garantir que é string ou undefined
-              tags={article.tags} // Passar o array de objetos Tag
-              href={`/articles/${article.slug}`} // Link direto para o artigo
-              linkText="Read Article"
-              // image_url={article.image_url} // Se existir um campo para imagem no futuro
-              // author_name={article.author?.name} // Se tiver dados do autor
-              // published_at={article.created_at} // Passar data para o card
+              description={article.description || undefined}
+              tags={article.tags}
+              href={`/articles/${article.slug}`}
             />
           ))}
         </div>

@@ -9,6 +9,7 @@ interface ContentItem {
   slug: string;
   title: string;
   description?: string;
+  tags?: { name: string; slug: string }[];
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
@@ -38,6 +39,23 @@ export default async function HomePage(): Promise<ReactElement> {
   const featuredArticle = articles.length > 0 ? articles[0] : null;
   const featuredProject = projects.length > 0 ? projects[0] : null;
 
+  const contentSections = [
+    {
+      title: "Articles",
+      items: articles,
+      basePath: "/articles",
+    },
+    {
+      title: "Courses",
+      items: courses,
+      basePath: "/courses",
+    },
+    {
+      title: "Projects",
+      items: projects,
+      basePath: "/portfolio",
+    },
+  ];
 
   return (
     <div className="space-y-20">
@@ -54,6 +72,8 @@ export default async function HomePage(): Promise<ReactElement> {
                 tag="Course"
                 title={featuredCourse?.title || "Intro to Exploitation"}
                 href={featuredCourse ? `/courses/${featuredCourse.slug}` : "#"}
+                description={featuredCourse?.description}
+                tags={featuredCourse?.tags}
               />
             </div>
             <div className="flex flex-col gap-6">
@@ -61,11 +81,15 @@ export default async function HomePage(): Promise<ReactElement> {
                 tag="Project"
                 title={featuredProject?.title || "Network Security Tools"}
                 href={featuredProject ? `/portfolio/${featuredProject.slug}` : "#"}
+                description={featuredProject?.description}
+                tags={featuredProject?.tags}
               />
               <FeaturedCardSmall
                 tag="Article"
                 title={featuredArticle?.title || "Docker Fundamentals"}
                 href={featuredArticle ? `/articles/${featuredArticle.slug}` : "#"}
+                description={featuredArticle?.description}
+                tags={featuredArticle?.tags}
               />
             </div>
           </div>
@@ -73,21 +97,14 @@ export default async function HomePage(): Promise<ReactElement> {
       </section>
 
       <section className="grid grid-cols-1 gap-x-8 gap-y-12 md:grid-cols-3">
-        <ContentList
-          title="Articles"
-          items={articles}
-          basePath="/articles"
-        />
-        <ContentList
-          title="Courses"
-          items={courses}
-          basePath="/courses"
-        />
-        <ContentList
-          title="Projects"
-          items={projects}
-          basePath="/portfolio"
-        />
+        {contentSections.map((section) => (
+          <ContentList
+            key={section.title}
+            title={section.title}
+            items={section.items}
+            basePath={section.basePath}
+          />
+        ))}
       </section>
     </div>
   );

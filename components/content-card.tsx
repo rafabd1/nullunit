@@ -4,14 +4,14 @@ import { Card, CardHeader, CardBody, CardFooter } from "@heroui/card";
 import { Chip } from "@heroui/chip";
 import { Link } from "@heroui/link";
 import { GithubIcon } from "@/components/icons"; // Icone para projetos
-import { Tag } from '@/types/article'; // Importar o tipo Tag
+import { Tag } from "@/components/ui/tag";
 
 interface ContentCardProps {
   type: 'article' | 'project';
   slug: string; // Slug do conteúdo principal (artigo ou projeto)
   title: string;
   description?: string;
-  tags?: Tag[]; // Alterado de string[] para Tag[]
+  tags?: { id: string; name: string; slug: string }[];
   href: string; // URL de destino (interna ou externa)
   linkText: string; // Texto do link (ex: "Read Article", "View on GitHub")
 }
@@ -29,28 +29,28 @@ export const ContentCard: React.FC<ContentCardProps> = ({
   const chipColor = type === 'article' ? 'primary' : 'secondary';
 
   return (
-    <Card key={slug} shadow="sm" className="bg-content1 dark:bg-content1-dark h-full flex flex-col">
-      <CardHeader className="pb-0 pt-4 px-4 flex-col items-start">
-        <h4 className="font-bold text-large mb-1 line-clamp-2">{title}</h4>
-        {description && (
-          <p className="text-sm text-default-600 dark:text-default-400 mb-2 line-clamp-3 flex-grow">
-            {description}
-          </p>
-        )}
-      </CardHeader>
-      <CardBody className="pt-2 pb-2 px-4 flex-grow">
+    <Card
+      key={slug}
+      className="group h-full transform-gpu transition-all duration-200 ease-in-out hover:-translate-y-1 hover:shadow-lg"
+    >
+      <CardBody className="flex h-full flex-col justify-between p-6">
+        <div>
+          <NextLink href={href}>
+            <h4 className="mb-2 text-xl font-bold text-foreground transition-colors line-clamp-2 group-hover:text-primary">
+              {title}
+            </h4>
+          </NextLink>
+
+          {description && (
+            <p className="mb-4 text-sm text-muted-foreground line-clamp-3">
+              {description}
+            </p>
+          )}
+        </div>
         {tags && tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-2">
+          <div className="flex flex-wrap gap-2 pt-4">
             {tags.map((tag) => (
-              <Chip
-                key={tag.id} // Revertido para tag.id, pois slug pode não estar presente
-                color={chipColor}
-                size="sm"
-                variant="flat"
-                className="cursor-default"
-              >
-                {tag.name}
-              </Chip>
+              <Tag key={tag.id} name={tag.name} slug={tag.slug} />
             ))}
           </div>
         )}

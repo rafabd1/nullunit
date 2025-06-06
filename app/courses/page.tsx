@@ -5,7 +5,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 
 import { Course } from '@/types/course'; // Tipos de Curso
 import { Tag } from '@/types/article'; // Importar Tag de article.ts
-import { CourseCard } from '@/components/CourseCard'; // Componente CourseCard
+import { ContentCard } from '@/components/content-card';
 import { FilterBar } from '@/components/filter-bar'; // Descomentado
 import { apiFetch } from '@/lib/api'; // Importa a nova função
 
@@ -96,8 +96,15 @@ export default function CoursesPage() {
 
       {filteredCourses.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-          {filteredCourses.map((course) => ( // Mapear sobre filteredCourses
-            <CourseCard key={course.id} course={course} />
+          {filteredCourses.map((course) => (
+            <ContentCard
+              key={course.id}
+              slug={course.slug}
+              title={course.title}
+              description={course.description || undefined}
+              tags={course.tags}
+              href={`/courses/${course.slug}`}
+            />
           ))}
         </div>
       ) : (

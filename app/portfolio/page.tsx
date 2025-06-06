@@ -104,15 +104,13 @@ export default function PortfolioPage() {
       {filteredProjects.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
           {filteredProjects.map((project) => (
-            <ContentCard 
-              key={project.id} // Usar project.id que deve ser único
-              type="project"
-              slug={project.slug} // Passar o slug do projeto para o ContentCard (usado como key interna do Card)
+            <ContentCard
+              key={project.id}
+              slug={project.slug}
               title={project.title}
               description={project.description}
-              tags={project.tags} // Espera Tag[] (pode ser undefined se o backend não enviar)
-              href={project.repo_url} // Corrigido para repo_url
-              linkText="View on GitHub"
+              tags={project.tags}
+              href={project.repo_url}
             />
           ))}
         </div>
