@@ -14,7 +14,7 @@ export function HeroSection(): ReactElement {
         Your platform for learning and collaborating in cybersecurity. Explore
         articles, courses, and tools.
       </p>
-      <Button as={NextLink} href="/courses" className="mt-8">
+      <Button as={NextLink} href="/courses" className="mt-8" variant="ghost">
         Get Started
       </Button>
     </section>

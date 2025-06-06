@@ -52,7 +52,7 @@ export const Navbar = () => {
   );
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border bg-panel/80 backdrop-blur-sm">
+    <header className="sticky top-0 z-40 w-full rounded-t-xl border-b border-border bg-panel/80 backdrop-blur-sm">
       <div className="container flex h-16 items-center">
         <NextLink href="/" className="flex items-center gap-2">
           <Logo />
