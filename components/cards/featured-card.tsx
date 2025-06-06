@@ -31,7 +31,7 @@ export function FeaturedCardLarge({
       href={href}
       className="group flex h-full flex-col justify-between rounded-xl border border-border bg-card p-8 transition-colors hover:border-primary/70"
     >
-      <div>
+      <div className="flex-grow">
         <h2 className="text-4xl font-bold text-foreground transition-colors group-hover:text-primary">
           {title}
         </h2>
@@ -68,7 +68,7 @@ export function FeaturedCardSmall({
       href={href}
       className="group flex h-full flex-col justify-between rounded-xl border border-border bg-card p-6 transition-colors hover:border-primary/70"
     >
-      <div>
+      <div className="flex-grow">
         <h3 className="mb-4 text-2xl font-bold text-foreground transition-colors group-hover:text-primary">
           {title}
         </h3>

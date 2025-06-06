@@ -1,8 +1,8 @@
 import { type ReactElement } from "react";
 import NextLink from 'next/link';
-import { FeaturedCardSmall, FeaturedCardLarge } from "@/components/cards/featured-card";
 import { HeroSection } from "@/components/home/hero-section";
 import { siteConfig } from "@/config/site";
+import { FeaturedGraphLoader } from "@/components/home/featured-graph-loader";
 
 interface ContentItem {
   id: string;
@@ -10,6 +10,7 @@ interface ContentItem {
   title: string;
   description?: string;
   tags?: { name: string; slug: string }[];
+  repo_url?: string;
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
@@ -35,10 +36,6 @@ export default async function HomePage(): Promise<ReactElement> {
     fetchContent("portfolio"),
   ]);
 
-  const featuredCourse = courses.length > 0 ? courses[0] : null;
-  const featuredArticle = articles.length > 0 ? articles[0] : null;
-  const featuredProject = projects.length > 0 ? projects[0] : null;
-
   const contentSections = [
     {
       title: "Articles",
@@ -62,38 +59,10 @@ export default async function HomePage(): Promise<ReactElement> {
       <HeroSection />
 
       <section>
-        <div className="rounded-xl bg-secondary p-6 lg:p-8">
-          <h2 className="mb-6 text-sm font-medium text-muted-foreground">
-            Featured
-          </h2>
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-2">
-              <FeaturedCardLarge
-                tag="Course"
-                title={featuredCourse?.title || "Intro to Exploitation"}
-                href={featuredCourse ? `/courses/${featuredCourse.slug}` : "#"}
-                description={featuredCourse?.description}
-                tags={featuredCourse?.tags}
-              />
-            </div>
-            <div className="flex flex-col gap-6">
-              <FeaturedCardSmall
-                tag="Project"
-                title={featuredProject?.title || "Network Security Tools"}
-                href={featuredProject ? `/portfolio/${featuredProject.slug}` : "#"}
-                description={featuredProject?.description}
-                tags={featuredProject?.tags}
-              />
-              <FeaturedCardSmall
-                tag="Article"
-                title={featuredArticle?.title || "Docker Fundamentals"}
-                href={featuredArticle ? `/articles/${featuredArticle.slug}` : "#"}
-                description={featuredArticle?.description}
-                tags={featuredArticle?.tags}
-              />
-            </div>
-          </div>
-        </div>
+        <h2 className="mb-6 text-sm font-medium text-muted-foreground">
+          Featured
+        </h2>
+        <FeaturedGraphLoader />
       </section>
 
       <section className="grid grid-cols-1 gap-x-8 gap-y-12 md:grid-cols-3">
@@ -120,7 +89,7 @@ function ContentList({
   basePath: string;
 }) {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 text-center md:text-left">
       <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
       <ul className="flex flex-col gap-3 list-disc list-inside">
         {items.length > 0 ? (
