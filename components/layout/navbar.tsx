@@ -1,61 +1,46 @@
-/* eslint-disable react/jsx-sort-props */
 "use client";
-/* eslint-disable import/order */
-import React, { useEffect, useRef } from 'react';
-import NextLink from 'next/link';
-import { useRouter } from 'next/navigation';
+
+import NextLink from "next/link";
+import { useRouter } from "next/navigation";
+import { Kbd } from "@heroui/kbd";
 import {
-  Navbar as HeroUINavbar,
-  NavbarContent,
-  NavbarBrand,
-  NavbarItem,
-} from '@heroui/navbar';
-import { Input, Kbd, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar, Button } from '@heroui/react';
-import { SearchIcon, Logo } from '@/components/icons';
-import { useAuth } from '@/providers/auth-provider';
-import { createClient } from '@/lib/supabase/client';
+  Button,
+  Dropdown,
+  DropdownItem,
+  DropdownMenu,
+  DropdownTrigger,
+  Avatar,
+  Input,
+} from "@heroui/react";
+
+import { useAuth } from "@/providers/auth-provider";
+import { createClient } from "@/lib/supabase/client";
+import { Logo, SearchIcon } from "@/components/icons";
+import { siteConfig } from "@/config/site";
 
 export const Navbar = () => {
   const { user, profile } = useAuth();
   const router = useRouter();
   const supabase = createClient();
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
-        event.preventDefault();
-        inputRef.current?.focus();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    router.push('/');
+    router.push("/");
     router.refresh();
   };
 
-  const navLinks = [
-    { label: 'Articles', href: '/articles' },
-    { label: 'Courses', href: '/courses' },
-    { label: 'Projects', href: '/portfolio' },
-  ];
-
   const searchInput = (
     <Input
-      ref={inputRef}
       aria-label="Search"
       classNames={{
-        inputWrapper: "bg-default-100",
+        inputWrapper:
+          "bg-background border border-border h-10 group-data-[focus=true]:border-primary",
         input: "text-sm",
       }}
       labelPlacement="outside"
       placeholder="Search..."
       startContent={
-        <SearchIcon className="text-base text-default-400 pointer-events-none flex-shrink-0" />
+        <SearchIcon className="pointer-events-none flex-shrink-0 text-muted-foreground" />
       }
       endContent={
         <Kbd className="hidden lg:inline-block" keys={["command"]}>
@@ -67,31 +52,30 @@ export const Navbar = () => {
   );
 
   return (
-    <HeroUINavbar maxWidth="xl" position="sticky" className="bg-transparent py-4">
-      <NavbarContent as="div" className="items-center" justify="start">
-        <NavbarBrand as="li" className="gap-3 max-w-fit">
-          <NextLink className="flex justify-start items-center gap-2" href="/">
-            <Logo />
-            <p className="font-bold text-inherit">Null.Unit</p>
-          </NextLink>
-        </NavbarBrand>
-      </NavbarContent>
+    <header className="sticky top-0 z-40 w-full border-b border-border bg-panel/80 backdrop-blur-sm">
+      <div className="container flex h-16 items-center">
+        <NextLink href="/" className="flex items-center gap-2">
+          <Logo />
+          <span className="font-bold">{siteConfig.name}</span>
+        </NextLink>
 
-      <NavbarContent as="div" className="hidden sm:flex items-center" justify="center">
-        {navLinks.map((item) => (
-            <NavbarItem key={item.href}>
-              <NextLink href={item.href} className="px-3 py-2 text-sm text-default-600 hover:text-primary transition-colors">
-                  {item.label}
-              </NextLink>
-            </NavbarItem>
+        <nav className="ml-10 hidden items-center gap-6 sm:flex">
+          {siteConfig.navItems.map((item) => (
+            <NextLink
+              key={item.href}
+              href={item.href}
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {item.label}
+            </NextLink>
           ))}
-      </NavbarContent>
+        </nav>
 
-      <NavbarContent as="div" className="items-center" justify="end">
-        <NavbarItem className="hidden lg:flex">{searchInput}</NavbarItem>
-        <NavbarItem>
+        <div className="flex flex-1 items-center justify-end gap-4">
+          <div className="hidden w-full max-w-xs lg:block">{searchInput}</div>
+
           {user ? (
-             <Dropdown placement="bottom-end">
+            <Dropdown placement="bottom-end">
               <DropdownTrigger>
                 <Avatar
                   isBordered
@@ -99,30 +83,42 @@ export const Navbar = () => {
                   className="transition-transform"
                   color="secondary"
                   size="sm"
-                  src={profile?.avatar_url || ''}
-                  name={profile?.username?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
+                  src={profile?.avatar_url || ""}
+                  name={
+                    profile?.username?.charAt(0).toUpperCase() ||
+                    user.email?.charAt(0).toUpperCase()
+                  }
                 />
               </DropdownTrigger>
               <DropdownMenu aria-label="Profile Actions" variant="flat">
                 <DropdownItem key="profile" className="h-14 gap-2">
                   <p className="font-semibold">Signed in as</p>
-                  <p className="font-semibold">{profile?.username || user.email}</p>
+                  <p className="font-semibold">
+                    {profile?.username || user.email}
+                  </p>
                 </DropdownItem>
-                <DropdownItem key="settings" onClick={() => router.push('/settings')}>
+                <DropdownItem
+                  key="settings"
+                  onClick={() => router.push("/settings")}
+                >
                   Settings
                 </DropdownItem>
-                <DropdownItem key="logout" color="danger" onClick={handleLogout}>
+                <DropdownItem
+                  key="logout"
+                  color="danger"
+                  onClick={handleLogout}
+                >
                   Log Out
                 </DropdownItem>
               </DropdownMenu>
             </Dropdown>
           ) : (
-            <Button as={NextLink} color="primary" href="/auth/login" variant="flat">
+            <Button as={NextLink} href="/auth/login" variant="ghost">
               Login
             </Button>
           )}
-        </NavbarItem>
-      </NavbarContent>
-    </HeroUINavbar>
+        </div>
+      </div>
+    </header>
   );
 };

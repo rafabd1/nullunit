@@ -1,6 +1,8 @@
 import { type ReactElement } from "react";
 import NextLink from 'next/link';
-import { FeaturedCard } from "@/components/cards/featured-card";
+import { FeaturedCardSmall, FeaturedCardLarge } from "@/components/cards/featured-card";
+import { HeroSection } from "@/components/home/hero-section";
+import { siteConfig } from "@/config/site";
 
 interface ContentItem {
   id: string;
@@ -32,70 +34,55 @@ export default async function HomePage(): Promise<ReactElement> {
     fetchContent("portfolio"),
   ]);
 
-  const featuredCourses = courses.slice(0, 2);
+  const featuredCourse = courses.length > 0 ? courses[0] : null;
   const featuredArticle = articles.length > 0 ? articles[0] : null;
+  const featuredProject = projects.length > 0 ? projects[0] : null;
+
 
   return (
-    <div className="mx-auto w-full max-w-screen-2xl">
-      <section className="mb-16">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">Atividade Recente</h1>
-          <p className="text-muted-foreground">
-            Conteúdo novo e em destaque pela comunidade.
-          </p>
-        </div>
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-8">
+    <div className="space-y-20">
+      <HeroSection />
+
+      <section>
+        <h2 className="mb-4 text-sm font-medium text-muted-foreground">
+          Featured
+        </h2>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <FeaturedCard
-              tag="Artigo em Destaque"
-              title={featuredArticle?.title || "Nenhum artigo encontrado"}
-              description={featuredArticle?.description || ""}
-              href={featuredArticle ? `/articles/${featuredArticle.slug}` : "#"}
-            />
+             <FeaturedCardLarge
+                tag="Course"
+                title={featuredCourse?.title || "Intro to Exploitation"}
+                href={featuredCourse ? `/courses/${featuredCourse.slug}` : "#"}
+             />
           </div>
-          <div className="flex flex-col gap-4">
-            {featuredCourses.map((course) => (
-              <FeaturedCard
-                key={course.id}
-                tag="Curso"
-                title={course.title}
-                description={course.description}
-                href={`/courses/${course.slug}`}
-              />
-            ))}
-             {featuredCourses.length === 0 && (
-              <FeaturedCard
-                tag="Curso"
-                title="Nenhum curso encontrado"
-                description="Volte mais tarde para ver os novos cursos."
-                href="#"
-              />
-            )}
-            {featuredCourses.length === 1 && (
-               <FeaturedCard
-                tag="Curso"
-                title="Aguardando mais cursos..."
-                description="Apenas um curso disponível no momento."
-                href="#"
-              />
-            )}
+          <div className="flex flex-col gap-6">
+            <FeaturedCardSmall
+                tag="Project"
+                title={featuredProject?.title || "Network Security Tools"}
+                href={featuredProject ? `/portfolio/${featuredProject.slug}` : "#"}
+            />
+            <FeaturedCardSmall
+                tag="Article"
+                title={featuredArticle?.title || "Docker Fundamentals"}
+                href={featuredArticle ? `/articles/${featuredArticle.slug}` : "#"}
+            />
           </div>
         </div>
       </section>
 
       <section className="grid grid-cols-1 gap-x-8 gap-y-12 md:grid-cols-3">
         <ContentList
-          title="Novos Artigos"
+          title="Articles"
           items={articles}
           basePath="/articles"
         />
         <ContentList
-          title="Novos Cursos"
+          title="Courses"
           items={courses}
           basePath="/courses"
         />
         <ContentList
-          title="Novos Projetos"
+          title="Projects"
           items={projects}
           basePath="/portfolio"
         />
@@ -115,13 +102,13 @@ function ContentList({
 }) {
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
-      <ul className="flex flex-col">
+      <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
+      <ul className="flex flex-col gap-3">
         {items.length > 0 ? (
-          items.map((item) => (
-            <li key={item.id} className="border-b border-default-100 py-3">
+          items.slice(0, 5).map((item) => (
+            <li key={item.id}>
               <NextLink
-                className="text-foreground transition-colors hover:text-primary"
+                className="text-muted-foreground transition-colors hover:text-foreground"
                 href={`${basePath}/${item.slug}`}
               >
                 {item.title}
@@ -129,7 +116,7 @@ function ContentList({
             </li>
           ))
         ) : (
-          <p className="text-muted-foreground">Nenhum item encontrado.</p>
+          <p className="text-sm text-muted-foreground">No items found.</p>
         )}
       </ul>
     </div>

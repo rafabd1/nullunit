@@ -1,28 +1,64 @@
 import NextLink from "next/link";
 import { type ReactElement } from "react";
+import { BookMarked, FolderGit2, FileText } from "lucide-react";
 
-interface FeaturedCardProps {
-  tag: string;
+interface FeaturedCardBaseProps {
+  tag: "Course" | "Project" | "Article";
   title: string;
-  description: string;
   href: string;
 }
 
-export function FeaturedCard({
+const tagIconMap = {
+  Course: BookMarked,
+  Project: FolderGit2,
+  Article: FileText,
+};
+
+export function FeaturedCardLarge({
   tag,
   title,
-  description,
   href,
-}: FeaturedCardProps): ReactElement {
+}: FeaturedCardBaseProps): ReactElement {
+  const Icon = tagIconMap[tag];
+
   return (
     <NextLink
       href={href}
-      className="group flex h-full flex-col rounded-xl border border-default-200 bg-default-100/50 p-6 transition-colors hover:border-primary hover:bg-default-200/50"
+      className="group flex h-full flex-col justify-between rounded-xl border border-border bg-card p-8 transition-colors hover:border-primary/70"
     >
-      <div className="flex-1">
-        <p className="mb-2 text-sm font-medium text-primary">{tag}</p>
-        <h3 className="text-xl font-semibold text-foreground">{title}</h3>
-        <p className="mt-3 text-muted-foreground">{description}</p>
+      <div>
+        <h2 className="text-4xl font-bold text-foreground transition-colors group-hover:text-primary">
+          {title}
+        </h2>
+      </div>
+      <div className="mt-8 flex items-center text-sm text-muted-foreground">
+        <Icon className="mr-2 h-4 w-4" />
+        <span>{tag}</span>
+      </div>
+    </NextLink>
+  );
+}
+
+export function FeaturedCardSmall({
+  tag,
+  title,
+  href,
+}: FeaturedCardBaseProps): ReactElement {
+  const Icon = tagIconMap[tag];
+
+  return (
+    <NextLink
+      href={href}
+      className="group flex h-full flex-col justify-between rounded-xl border border-border bg-card p-6 transition-colors hover:border-primary/70"
+    >
+      <div>
+        <h3 className="mb-4 text-2xl font-bold text-foreground transition-colors group-hover:text-primary">
+          {title}
+        </h3>
+      </div>
+      <div className="mt-4 flex items-center text-sm text-muted-foreground">
+        <Icon className="mr-2 h-4 w-4" />
+        <span>{tag}</span>
       </div>
     </NextLink>
   );

@@ -7,8 +7,9 @@ import { Providers } from "./providers";
 import { siteConfig } from "@/config/site";
 import { Navbar } from "@/components/layout/navbar";
 import { Inter } from 'next/font/google';
+import { AuthProvider } from "@/providers/auth-provider";
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
 export const metadata: Metadata = {
   title: {
@@ -28,27 +29,25 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({
-  children,
-}: {
+interface RootLayoutProps {
   children: React.ReactNode;
-}) {
+}
+
+export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html suppressHydrationWarning lang="en" className={inter.className}>
+    <html suppressHydrationWarning lang="en" className="dark">
       <head />
-      <body className="bg-background text-foreground antialiased">
-        <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
-          <div className="absolute top-0 left-0 w-full h-full bg-[url('/path-to-your-background-pattern.svg')] bg-repeat opacity-5 z-0" />
-          
-          <div className="relative flex flex-col items-center min-h-screen z-10">
-            <div className="w-full max-w-7xl mx-auto flex flex-col flex-grow">
-              <Navbar />
-              <main className="flex-grow pt-16">
+      <body className={`${inter.variable} font-sans antialiased`}>
+        <AuthProvider>
+          <div className="relative flex min-h-screen flex-col">
+            <Navbar />
+            <main className="container mx-auto max-w-7xl flex-grow p-6">
+              <div className="rounded-lg border border-border bg-panel/50 p-4 sm:p-6 lg:p-8">
                 {children}
-              </main>
-            </div>
+              </div>
+            </main>
           </div>
-        </Providers>
+        </AuthProvider>
       </body>
     </html>
   );
