@@ -1,19 +1,26 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Card, CardBody, Spinner } from '@heroui/react';
+import { Card, CardBody, Spinner, Button } from '@heroui/react';
+import Link from 'next/link';
 
 /**
  * @description Auth callback page for handling authentication redirects
  */
 export default function AuthCallbackPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
 
+  const type = searchParams.get('type');
+
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    // Only set up the auth listener if it's not a specific callback type we handle separately
+    if (type) return;
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, _session) => {
       if (event === 'SIGNED_IN') {
         // Successful sign-in, redirect to home.
         router.push('/');
@@ -29,8 +36,27 @@ export default function AuthCallbackPage() {
     return () => {
       subscription?.unsubscribe();
     };
-  }, [router, supabase]);
+  }, [router, supabase, type]);
 
+  if (type === 'email_change') {
+    return (
+      <div className="flex justify-center items-center h-[calc(100vh-4rem)]">
+         <Card className="w-full max-w-md p-6 text-center">
+          <CardBody className="flex flex-col items-center justify-center gap-4">
+            <h1 className="text-xl font-medium">Email Successfully Updated!</h1>
+            <p className="text-default-500">
+              Your email address has been changed. You can now use your new email to log in.
+            </p>
+            <Link href="/login">
+                <Button variant="solid" color="primary">Go to Login</Button>
+            </Link>
+          </CardBody>
+        </Card>
+      </div>
+    );
+  }
+
+  // Default view for standard sign-in callbacks
   return (
     <div className="flex justify-center items-center h-[calc(100vh-4rem)]">
        <Card className="w-full max-w-md p-6 text-center">

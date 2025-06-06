@@ -21,6 +21,7 @@
     "@heroui/switch": "2.2.15",
     "@heroui/system": "2.4.13",
     "@heroui/theme": "2.4.13",
+    "@hookform/resolvers": "^5.0.1",
     "@react-aria/ssr": "3.9.7",
     "@react-aria/visually-hidden": "3.8.21",
     "@supabase/ssr": "^0.6.1",
@@ -36,10 +37,13 @@
     "prismjs": "^1.30.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
+    "react-hook-form": "^7.57.0",
     "react-markdown": "^10.1.0",
     "react-syntax-highlighter": "^15.6.1",
     "rehype-prism-plus": "^2.0.1",
-    "remark-gfm": "^4.0.1"
+    "remark-gfm": "^4.0.1",
+    "sonner": "^2.0.5",
+    "zod": "^3.25.53"
   },
   "devDependencies": {
     "@next/eslint-plugin-next": "15.0.4",
