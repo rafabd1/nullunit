@@ -45,6 +45,7 @@ interface SearchResult {
 import { useAuth } from "@/providers/auth-provider";
 import { Avatar } from "@heroui/avatar";
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@heroui/dropdown";
+import { createClient } from "@/lib/supabase/client"; // Importar o cliente
 
 export const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -52,6 +53,7 @@ export const Navbar = () => {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const { user, isLoading } = useAuth();
+  const supabase = createClient(); // Instanciar o cliente
 
   // Função de busca Memoizada
   const performSearch = useMemo(() => {
@@ -178,15 +180,12 @@ export const Navbar = () => {
   };
 
   const handleLogout = async () => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
-    const response = await fetch(`${apiUrl}/api/auth/logout`, { 
-      method: 'POST',
-      credentials: 'include',
-    });
-    if (response.ok) {
-      router.push('/');
-      router.refresh(); // Para forçar a atualização do estado no servidor e re-renderizar
-    }
+    await supabase.auth.signOut();
+    // O onAuthStateChange no AuthProvider vai detectar o logout e atualizar o estado.
+    // O router.refresh() ajuda a garantir que qualquer conteúdo renderizado no servidor
+    // também seja atualizado para o estado de "não logado".
+    router.push('/');
+    router.refresh(); 
   };
 
   return (
