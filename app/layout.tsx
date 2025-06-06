@@ -3,13 +3,12 @@ import "prism-themes/themes/prism-one-dark.css";
 import { Metadata, Viewport } from "next";
 import { Link } from "@heroui/link";
 import clsx from "clsx";
-
 import { Providers } from "./providers";
-
 import { siteConfig } from "@/config/site";
-import { fontSans } from "@/config/fonts";
-import { Navbar } from "@/components/navbar";
-import { Footer } from "@/components/footer";
+import { Navbar } from "@/components/layout/navbar";
+import { Inter } from 'next/font/google';
+
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: {
@@ -35,21 +34,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html suppressHydrationWarning lang="en">
+    <html suppressHydrationWarning lang="en" className={inter.className}>
       <head />
-      <body
-        className={clsx(
-          "min-h-screen bg-background font-sans antialiased",
-          fontSans.variable,
-        )}
-      >
+      <body className="bg-background text-foreground antialiased">
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
-          <div className="relative flex flex-col h-screen">
-            <Navbar />
-            <main className="container mx-auto max-w-7xl pt-16 px-6 flex-grow">
-              {children}
-            </main>
-            <Footer />
+          <div className="absolute top-0 left-0 w-full h-full bg-[url('/path-to-your-background-pattern.svg')] bg-repeat opacity-5 z-0" />
+          
+          <div className="relative flex flex-col items-center min-h-screen z-10">
+            <div className="w-full max-w-7xl mx-auto flex flex-col flex-grow">
+              <Navbar />
+              <main className="flex-grow pt-16">
+                {children}
+              </main>
+            </div>
           </div>
         </Providers>
       </body>

@@ -11,6 +11,7 @@ interface MemberProfile {
   username: string;
   bio?: string;
   website?: string;
+  avatar_url?: string;
   // adicione outros campos do perfil aqui
 }
 
