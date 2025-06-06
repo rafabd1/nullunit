@@ -44,7 +44,7 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        panel: 'hsl(var(--panel))',
+        panel: 'hsl(var(--panel) / <alpha-value>)',
       },
       fontFamily: {
         sans: ["var(--font-sans)"],
