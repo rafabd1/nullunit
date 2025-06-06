@@ -14,10 +14,10 @@ import { DynamicArticleLoader } from '@/components/dynamic-article-loader';
 // import { ArticleModule, SubArticle } from "@/types/article";
 
 // Função para buscar os dados do artigo via API
-async function getArticleData(params: { slug: string }): Promise<Article | undefined> {
+async function getArticleData(slug: string): Promise<Article | undefined> {
   try {
-    // O slug do artigo é diretamente params.slug
-    const articleSlug = params.slug;
+    // O slug do artigo é diretamente o parâmetro 'slug'
+    const articleSlug = slug;
     
     const apiUrlBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
     const res = await fetch(`${apiUrlBase}/api/articles/${articleSlug}`);
@@ -32,18 +32,18 @@ async function getArticleData(params: { slug: string }): Promise<Article | undef
     const article: Article = await res.json();
     return article;
   } catch (error) {
-    console.error(`Failed to fetch article data for slug ${params.slug}:`, error);
+    console.error(`Failed to fetch article data for slug ${slug}:`, error);
     return undefined;
   }
 }
 
 export default async function ArticlePage({
-  params,
+  params: { slug },
 }: {
-  params: { slug: string }; // Alterado de string[] para string
+  params: { slug: string };
 }) {
-  // Passar params diretamente ou apenas o slug, dependendo de como getArticleData espera
-  const article = await getArticleData(params);
+  // Passar o slug diretamente para a função getArticleData
+  const article = await getArticleData(slug);
 
   // Se o artigo não for encontrado (ou erro na busca), mostrar página 404
   if (!article) {

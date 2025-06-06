@@ -35,8 +35,8 @@ async function getCourseDetails(slug: string): Promise<Course | null> {
   }
 }
 
-export default async function CourseDetailPage({ params }: CourseDetailPageProps) {
-  const course = await getCourseDetails(params.courseSlug);
+export default async function CourseDetailPage({ params: { courseSlug } }: CourseDetailPageProps) {
+  const course = await getCourseDetails(courseSlug);
 
   if (!course) {
     notFound(); // Exibe a página 404 se o curso não for encontrado ou houver erro
