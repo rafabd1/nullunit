@@ -7,6 +7,7 @@ import { Course } from '@/types/course'; // Tipos de Curso
 import { Tag } from '@/types/article'; // Importar Tag de article.ts
 import { CourseCard } from '@/components/CourseCard'; // Componente CourseCard
 import { FilterBar } from '@/components/filter-bar'; // Descomentado
+import { apiFetch } from '@/lib/api'; // Importa a nova função
 
 // Função de filtro para Cursos
 const filterCourses = (course: Course, searchTerm: string, selectedTags: Set<string>): boolean => {
@@ -44,8 +45,7 @@ export default function CoursesPage() {
       setIsLoading(true);
       setError(null);
       try {
-        const apiUrlBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
-        const response = await fetch(`${apiUrlBase}/api/courses`);
+        const response = await apiFetch('/courses'); // Usa a nova função
         if (!response.ok) {
           throw new Error(`Failed to fetch courses: ${response.status} ${response.statusText}`);
         }

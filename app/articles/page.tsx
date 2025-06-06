@@ -8,6 +8,7 @@ import { Link as HerouiLink } from "@heroui/link"; // Renomeado para evitar conf
 import { Article, Tag } from "@/types/article"; 
 import { ContentCard } from "@/components/content-card"; 
 import { FilterBar } from "@/components/filter-bar"; 
+import { apiFetch } from '@/lib/api'; // Importa a nova função
 
 // Função de filtro para Artigos
 const filterArticles = (article: Article, searchTerm: string, selectedTags: Set<string>): boolean => {
@@ -47,8 +48,7 @@ export default function ArticlesPage() {
       setIsLoading(true);
       setError(null);
       try {
-        const apiUrlBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
-        const response = await fetch(`${apiUrlBase}/api/articles`);
+        const response = await apiFetch('/articles'); // Usa a nova função
         if (!response.ok) {
           throw new Error(`Failed to fetch articles: ${response.status} ${response.statusText}`);
         }
