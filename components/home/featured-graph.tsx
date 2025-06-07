@@ -214,13 +214,10 @@ const transformDataToGraph = (content: GraphContent[], width: number, height: nu
     return { nodes, links };
 }
 
-export const FeaturedGraph = () => {
+export const FeaturedGraph = ({ content }: { content: GraphContent[] }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  const [content, setContent] = useState<GraphContent[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   
   // State for the calculated graph data
   const [graphData, setGraphData] = useState<{ nodes: NodeObject[], links: { source: string, target: string }[] }>({ nodes: [], links: [] });
@@ -230,58 +227,6 @@ export const FeaturedGraph = () => {
   const [tooltipStyle, setTooltipStyle] = useState({});
   const [hoveredElement, setHoveredElement] = useState<SVGGElement | null>(null);
 
-  useEffect(() => {
-    const fetchFeaturedContent = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const [articlesRes, coursesRes, projectsRes] = await Promise.all([
-          apiFetch("/articles"),
-          apiFetch("/courses"),
-          apiFetch("/portfolio"),
-        ]);
-
-        if (!articlesRes.ok || !coursesRes.ok || !projectsRes.ok) {
-          throw new Error("Failed to fetch one or more content types.");
-        }
-
-        const articles: Article[] = await articlesRes.json();
-        const courses: Course[] = await coursesRes.json();
-        const projects: PortfolioProject[] = await projectsRes.json();
-
-        const allContent: (Article | Course | PortfolioProject)[] = [...articles, ...courses, ...projects];
-
-        const processedContent: GraphContent[] = allContent.map(item => {
-            let type: "Article" | "Course" | "Project";
-            if ('repo_url' in item) type = 'Project';
-            else if ('is_paid' in item) type = 'Course';
-            else type = 'Article';
-
-            return {
-                ...item,
-                type: type,
-                likes: (item as any).likes || 0,
-                description: item.description || "",
-                tags: item.tags || [],
-            };
-        });
-
-        const featuredContent = processedContent
-          .sort((a, b) => b.likes - a.likes)
-          .slice(0, 9);
-
-        console.log(featuredContent);
-        setContent(featuredContent);
-      } catch (err: any) {
-        console.error("Failed to fetch featured content:", err);
-        setError("Could not load featured content.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchFeaturedContent();
-  }, []);
-  
   // This effect now triggers the graph calculation *after* content is loaded and the container is available.
   useEffect(() => {
     // Only proceed if we have content and a container with a measurable size.
@@ -391,24 +336,16 @@ export const FeaturedGraph = () => {
     }
   };
 
-  if (error) {
+  if (content.length === 0) {
     return (
-      <div className="relative flex h-[450px] w-full items-center justify-center rounded-xl bg-secondary text-red-500">
-        <p>{error}</p>
+      <div className="relative flex h-[450px] w-full items-center justify-center rounded-xl bg-secondary">
+        <p className="text-muted-foreground">No featured content available.</p>
       </div>
     );
   }
 
-  // The loading state from the dynamic import will cover the initial load.
-  // This check is for when the component is mounted but data is still fetching.
-  if (isLoading && content.length === 0) {
-    return null; // Or a more specific loading indicator if desired
-  }
-
   return (
-    <div ref={containerRef} className="relative w-full rounded-xl bg-secondary h-[450px] overflow-hidden">
-       <h2 className="absolute top-6 left-6 text-lg font-semibold tracking-tight z-20">Featured</h2>
-       
+    <div ref={containerRef} className="relative w-full h-full min-h-[450px] overflow-hidden">
        <div className="absolute inset-0 z-10">
           {dimensions.width > 0 && (
             <svg width="100%" height="100%" viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}>

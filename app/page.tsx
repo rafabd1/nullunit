@@ -2,7 +2,7 @@ import { type ReactElement } from "react";
 import NextLink from 'next/link';
 import { HeroSection } from "@/components/home/hero-section";
 import { siteConfig } from "@/config/site";
-import { FeaturedGraphLoader } from "@/components/home/featured-graph-loader";
+import { FeaturedSection } from "@/components/home/featured-section";
 import { apiFetch } from "@/lib/api";
 
 interface ContentItem {
@@ -55,11 +55,11 @@ export default async function HomePage(): Promise<ReactElement> {
   ];
 
   return (
-    <div className="space-y-20">
+    <div className="space-y-14">
       <HeroSection />
 
       <section>
-        <FeaturedGraphLoader />
+        <FeaturedSection />
       </section>
 
       <section className="mx-auto w-full max-w-5xl px-6">

@@ -10,7 +10,7 @@ export function HeroSection(): ReactElement {
       <h1 className="text-5xl font-bold tracking-tighter sm:text-7xl">
         Learn cybersecurity.
       </h1>
-      <p className="mt-6 mb-2 max-w-2xl text-lg text-muted-foreground">
+      <p className="mt-6 mb-6 max-w-2xl text-lg text-muted-foreground">
         Your platform for learning and collaborating in cybersecurity. Explore
         articles, courses, and tools.
       </p>
