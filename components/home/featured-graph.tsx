@@ -317,7 +317,7 @@ export const FeaturedGraph = ({ content }: { content: GraphContent[] }) => {
         }
         return newVisible;
       });
-    }, 1100);
+    }, 1000);
     return () => clearInterval(interval);
   }, [graphData.nodes, hoveredNode, dimensions.width]);
 
