@@ -59,21 +59,20 @@ export default async function HomePage(): Promise<ReactElement> {
       <HeroSection />
 
       <section>
-        <h2 className="mb-6 text-sm font-medium text-muted-foreground">
-          Featured
-        </h2>
         <FeaturedGraphLoader />
       </section>
 
-      <section className="grid grid-cols-1 gap-x-8 gap-y-12 md:grid-cols-3">
-        {contentSections.map((section) => (
-          <ContentList
-            key={section.title}
-            title={section.title}
-            items={section.items}
-            basePath={section.basePath}
-          />
-        ))}
+      <section className="w-full">
+        <div className="mx-auto grid max-w-5xl grid-cols-1 gap-x-8 gap-y-12 md:grid-cols-3">
+          {contentSections.map((section) => (
+            <ContentList
+              key={section.title}
+              title={section.title}
+              items={section.items}
+              basePath={section.basePath}
+            />
+          ))}
+        </div>
       </section>
     </div>
   );

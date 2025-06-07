@@ -1,8 +1,6 @@
 "use client";
-import React, { useEffect, useState, useRef, useCallback } from "react";
-import OriginalForceGraph2D from "react-force-graph-2d";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useWindowSize } from "@uidotdev/usehooks";
 import {
   BookMarked,
   FolderGit2,
@@ -10,10 +8,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-// Cast to a compatible type for React 18
-const ForceGraph2D = OriginalForceGraph2D as any;
-
-// No futuro, estes dados virão da sua API
 const DUMMY_CONTENT = [
   { id: "c1", type: "Course" as const, slug: "adv-exploit-dev", title: "Advanced Exploit Development", description: "Deep dive into modern exploitation techniques.", likes: 85, tags: ["exploit", "reverse-engineering"] },
   { id: "a1", type: "Article" as const, slug: "rop-chains", title: "Understanding ROP Chains", description: "A detailed breakdown of Return-Oriented Programming.", likes: 120, tags: ["exploit", "memory-corruption"] },
@@ -35,20 +29,46 @@ type NodeObject = {
   description: string;
   tags: string[];
   type: "Course" | "Article" | "Project";
-  val: number;
-  x?: number;
-  y?: number;
+  likes: number;
+  x: number;
+  y: number;
+  size: number;
 };
 
+const scaleLikesToSize = (likes: number, minLikes: number, maxLikes: number, minSize: number, maxSize: number): number => {
+  if (maxLikes === minLikes) return (minSize + maxSize) / 2;
+  const scale = (likes - minLikes) / (maxLikes - minLikes);
+  return minSize + scale * (maxSize - minSize);
+};
+
+const getDistance = (node1: NodeObject, node2: NodeObject) =>
+  Math.sqrt(Math.pow(node1.x - node2.x, 2) + Math.pow(node1.y - node2.y, 2));
+
 const transformDataToGraph = (content: typeof DUMMY_CONTENT) => {
-    const nodes: NodeObject[] = content.map(item => ({
-        id: item.id,
-        title: item.title,
-        description: item.description,
-        tags: item.tags,
-        type: item.type,
-        val: Math.log(item.likes + 1) * 2,
-    }));
+    const likes = content.map(c => c.likes);
+    const minLikes = Math.min(...likes);
+    const maxLikes = Math.max(...likes);
+
+    // 1. Generate node positions with minimum distance
+    const nodes: NodeObject[] = [];
+    content.forEach(item => {
+        let pos = { x: 0, y: 0 };
+        let isOverlapping = true;
+        let attempts = 0;
+        const MIN_DIST = 15; // Minimum distance in percentage
+
+        while (isOverlapping && attempts < 100) {
+            pos = { x: Math.random() * 80 + 10, y: Math.random() * 80 + 10 };
+            isOverlapping = nodes.some(n => getDistance({ ...pos } as NodeObject, n) < MIN_DIST);
+            attempts++;
+        }
+
+        nodes.push({
+            ...item,
+            ...pos,
+            size: scaleLikesToSize(item.likes, minLikes, maxLikes, 1.5, 3.5),
+        });
+    });
 
     const links: { source: string, target: string }[] = [];
     const tagMap: { [key: string]: string[] } = {};
@@ -60,111 +80,214 @@ const transformDataToGraph = (content: typeof DUMMY_CONTENT) => {
         });
     });
 
+    // 2. Generate links using a Minimum Spanning Tree (MST) for better layout
     Object.values(tagMap).forEach(nodeIds => {
-        if (nodeIds.length > 1) {
-            for (let i = 0; i < nodeIds.length; i++) {
-                for (let j = i + 1; j < nodeIds.length; j++) {
-                    links.push({ source: nodeIds[i], target: nodeIds[j] });
+        if (nodeIds.length < 2) return;
+        const groupNodes = nodeIds.map(id => nodes.find(n => n.id === id)!);
+        
+        const mstEdges: { source: string; target: string }[] = [];
+        const visited = new Set<string>([groupNodes[0].id]);
+        const edges: { from: string; to: string; dist: number }[] = [];
+
+        groupNodes.forEach(node1 => {
+            if (node1.id === groupNodes[0].id) return;
+            edges.push({ from: groupNodes[0].id, to: node1.id, dist: getDistance(groupNodes[0], node1) });
+        });
+        
+        while (visited.size < groupNodes.length && edges.length > 0) {
+            edges.sort((a, b) => a.dist - b.dist);
+            const edge = edges.shift();
+            if (!edge || visited.has(edge.to)) continue;
+            
+            visited.add(edge.to);
+            mstEdges.push({ source: edge.from, target: edge.to });
+            
+            const newNode = nodes.find(n => n.id === edge.to)!;
+            groupNodes.forEach(otherNode => {
+                if (!visited.has(otherNode.id)) {
+                    edges.push({ from: newNode.id, to: otherNode.id, dist: getDistance(newNode, otherNode) });
                 }
-            }
+            });
         }
+        links.push(...mstEdges);
     });
 
     return { nodes, links };
 }
 
 export const FeaturedGraph = () => {
-  const [graphData, setGraphData] = useState<{ nodes: NodeObject[], links: any[] }>({ nodes: [], links: [] });
   const [hoveredNode, setHoveredNode] = useState<NodeObject | null>(null);
-  const [panelPosition, setPanelPosition] = useState({ x: 0, y: 0 });
-
-  const graphRef = useRef<any>();
+  const [visibleNodeIds, setVisibleNodeIds] = useState<string[]>([]);
+  const [tooltipStyle, setTooltipStyle] = useState({});
   const containerRef = useRef<HTMLDivElement>(null);
-  
-  const size = useWindowSize();
-  const [dimensions, setDimensions] = useState({ width: 800, height: 450 });
+  const [hoveredElement, setHoveredElement] = useState<SVGGElement | null>(null);
+
+  const graphData = useMemo(() => transformDataToGraph(DUMMY_CONTENT), []);
 
   useEffect(() => {
-    if (containerRef.current) {
-      setDimensions({
-        width: containerRef.current.offsetWidth,
-        height: containerRef.current.offsetHeight
+    // New, robust logic for adaptive tooltip position
+    if (hoveredNode && hoveredElement && containerRef.current) {
+        const containerRect = containerRef.current.getBoundingClientRect();
+        const nodeRect = hoveredElement.getBoundingClientRect();
+        const tooltipWidth = 256;
+        const tooltipHeight = 120;
+        const gap = 20; // Increased gap for better spacing
+
+        // Calculate the node's center relative to the container
+        const nodeCenterX = (nodeRect.left + nodeRect.width / 2) - containerRect.left;
+        const nodeCenterY = (nodeRect.top + nodeRect.height / 2) - containerRect.top;
+
+        // Ideal position: centered above the node
+        let top = nodeCenterY - tooltipHeight - gap;
+        let left = nodeCenterX - tooltipWidth / 2;
+        
+        // --- Collision Correction ---
+        // Vertical: If not enough space above, flip it below
+        if (top < 10) {
+            top = nodeCenterY + gap;
+        }
+
+        // Horizontal: Clamp to container bounds
+        if (left < 10) {
+            left = 10;
+        } else if (left + tooltipWidth > containerRect.width - 10) {
+            left = containerRect.width - tooltipWidth - 10;
+        }
+
+        setTooltipStyle({
+            position: 'absolute',
+            top: `${top}px`,
+            left: `${left}px`,
+            transform: '',
+        });
+    }
+  }, [hoveredNode, hoveredElement]);
+
+  useEffect(() => {
+    // Logic for randomly showing node titles
+    const MAX_VISIBLE_TITLES = 3;
+    const interval = setInterval(() => {
+      if (hoveredNode) {
+        setVisibleNodeIds([]);
+        return;
+      }
+      setVisibleNodeIds(currentVisible => {
+        let newVisible = [...currentVisible];
+        if (Math.random() < 0.3 && newVisible.length > 0) {
+          newVisible.splice(Math.floor(Math.random() * newVisible.length), 1);
+        }
+        if (Math.random() < 0.7 && newVisible.length < MAX_VISIBLE_TITLES) {
+          const availableNodes = graphData.nodes.filter(n => !newVisible.includes(n.id));
+          if (availableNodes.length > 0) {
+            const randomNode = availableNodes[Math.floor(Math.random() * availableNodes.length)];
+            newVisible.push(randomNode.id);
+          }
+        }
+        return newVisible;
       });
-    }
-  }, [size, containerRef.current]);
+    }, 1500);
+    return () => clearInterval(interval);
+  }, [graphData.nodes, hoveredNode]);
 
-  useEffect(() => {
-    const data = transformDataToGraph(DUMMY_CONTENT);
-    setGraphData(data);
-  }, []);
-
-  const handleNodeHover = (node: NodeObject | null) => {
-    setHoveredNode(node);
-    if (node && graphRef.current) {
-        const {x, y} = graphRef.current.graph2ScreenCoords(node.x || 0, node.y || 0);
-        setPanelPosition({ x, y });
-    }
-  };
-
-  const renderNode = useCallback((node: NodeObject, ctx: CanvasRenderingContext2D, globalScale: number) => {
-    const isHovered = hoveredNode && hoveredNode.id === node.id;
-    const label = node.title;
-    const fontSize = 12 / globalScale;
-    
-    // Animação de pulso para brilho e texto
-    const pulse = Math.abs(Math.sin(Date.now() * 0.001 + node.val));
-    
-    // Desenha o nó
-    ctx.beginPath();
-    ctx.arc(node.x!, node.y!, node.val + (isHovered ? 1 : 0), 0, 2 * Math.PI, false);
-    const glow = isHovered ? 30 : pulse * 15;
-    ctx.shadowBlur = glow;
-    ctx.shadowColor = "rgba(255, 255, 255, 0.5)";
-    ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
-    ctx.fill();
-    ctx.shadowBlur = 0;
-    
-    // Desenha o texto
-    if (globalScale > 1.5) { // Só mostra o texto se o zoom for suficiente
-        const textAlpha = isHovered ? 1 : Math.max(0.1, pulse * 0.5);
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillStyle = `rgba(255, 255, 255, ${textAlpha})`;
-        ctx.font = `${fontSize}px Inter`;
-        ctx.fillText(label, node.x!, node.y! + node.val + 8);
-    }
-  }, [hoveredNode]);
+  const getNodeById = (id: string) => graphData.nodes.find(n => n.id === id);
 
   return (
-    <div ref={containerRef} className="relative rounded-xl bg-secondary h-[450px] -mx-6 -my-4 lg:-mx-8 lg:-my-6 overflow-hidden">
-       <ForceGraph2D
-        ref={graphRef}
-        graphData={graphData}
-        width={dimensions.width}
-        height={dimensions.height}
-        cooldownTicks={100}
-        onEngineStop={() => graphRef.current?.zoomToFit(400, 150)}
-        nodeCanvasObject={renderNode}
-        onNodeHover={handleNodeHover as any}
-        linkDirectionalParticles={1}
-        linkDirectionalParticleColor={() => "rgba(255, 255, 255, 0.5)"}
-        linkDirectionalParticleSpeed={0.005}
-        linkDirectionalParticleWidth={0.5}
-        linkColor={() => "rgba(255, 255, 255, 0.1)"}
-       />
+    <div ref={containerRef} className="relative rounded-xl bg-secondary h-[420px] overflow-hidden">
+       <h2 className="absolute top-6 left-6 text-lg font-semibold tracking-tight z-20">Featured</h2>
+       
+       <div className="absolute inset-0 z-10">
+          <svg width="100%" height="100%" viewBox="0 0 100 100">
+            {graphData.links.map((link, i) => {
+              const sourceNode = getNodeById(link.source);
+              const targetNode = getNodeById(link.target);
+              if (!sourceNode || !targetNode) return null;
+
+              return (
+                <motion.line
+                  key={`${link.source}-${link.target}-${i}`}
+                  x1={sourceNode.x}
+                  y1={sourceNode.y}
+                  x2={targetNode.x}
+                  y2={targetNode.y}
+                  stroke="rgba(255, 255, 255, 0.2)"
+                  strokeWidth="0.15"
+                  initial={{ pathLength: 0, opacity: 0 }}
+                  animate={{ pathLength: 1, opacity: 1 }}
+                  transition={{ duration: 1.5, delay: i * 0.15, ease: "easeInOut" }}
+                />
+              );
+            })}
+          
+            {graphData.nodes.map(node => {
+                const isHovered = hoveredNode?.id === node.id;
+                const isRandomlyVisible = visibleNodeIds.includes(node.id);
+
+                return (
+                    <motion.g 
+                        key={node.id} 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.5, delay: Math.random() * 0.5 }}
+                        transform={`translate(${node.x}, ${node.y})`}
+                        onMouseEnter={(e) => {
+                            setHoveredNode(node);
+                            setHoveredElement(e.currentTarget as SVGGElement);
+                        }}
+                        onMouseLeave={() => {
+                            setHoveredNode(null);
+                            setHoveredElement(null);
+                        }}
+                        className="group"
+                    >
+                        {/* New Glow Effect Element */}
+                        <motion.circle
+                            cx="0"
+                            cy="0"
+                            r={node.size}
+                            fill="hsl(var(--muted-foreground))"
+                            className="opacity-75"
+                            style={{ filter: 'blur(3px)'}}
+                            animate={{ scale: [1, 1.5, 1], opacity: [0.3, 0.7, 0.3] }}
+                            transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: Math.random() * 2.5 }}
+                        />
+                        {/* Main Visible Node */}
+                        <motion.circle
+                            cx="0"
+                            cy="0"
+                            r={node.size}
+                            fill="transparent"
+                            stroke="hsl(var(--muted-foreground))"
+                            strokeWidth="0.3"
+                            className="cursor-pointer"
+                        />
+                        <text
+                          x="0"
+                          y={node.size + 4}
+                          textAnchor="middle"
+                          fill="hsl(var(--muted-foreground))"
+                          className="transition-opacity duration-1000 pointer-events-none"
+                          style={{
+                              opacity: isHovered || isRandomlyVisible ? 1 : 0,
+                              fontSize: "2.25px"
+                          }}
+                        >
+                          {node.title}
+                        </text>
+                    </motion.g>
+                )
+            })}
+          </svg>
+       </div>
+
        <AnimatePresence>
             {hoveredNode && (
                 <motion.div
-                    initial={{ opacity: 0, scale: 0.9, y: -20 }}
+                    initial={{ opacity: 0, scale: 0.95, y: -10 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.9, y: -20 }}
+                    exit={{ opacity: 0, scale: 0.95, y: -10 }}
                     transition={{ duration: 0.2, ease: "easeInOut" }}
-                    className="absolute bg-background/80 backdrop-blur-md border border-border rounded-lg p-4 w-64 text-sm pointer-events-none shadow-2xl"
-                    style={{
-                        top: panelPosition.y,
-                        left: panelPosition.x,
-                        transform: 'translate(-50%, -125%)', // Ajusta para aparecer acima do nó
-                    }}
+                    className="absolute bg-background/80 backdrop-blur-md border border-border rounded-lg p-4 w-64 text-sm pointer-events-none shadow-2xl z-30"
+                    style={tooltipStyle}
                 >
                    <div className="font-bold text-base mb-2 flex items-center">
                     {React.createElement(ICONS[hoveredNode.type], { className: "w-4 h-4 mr-2 flex-shrink-0"})}

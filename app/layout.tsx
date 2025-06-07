@@ -36,7 +36,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         className={`${inter.variable} min-h-screen font-sans antialiased`}
       >
         <AuthProvider>
-          <div className="px-4 pb-4 pt-2 md:px-6 md:pb-6 md:pt-3 lg:px-8 lg:pb-8 lg:pt-4">
+          <div className="px-6 pt-3 pb-6 md:px-8 md:pt-4 md:pb-8 lg:px-12 lg:pt-6 lg:pb-12">
             <div className="mx-auto w-full max-w-screen-2xl rounded-xl border border-border bg-panel/30">
               <Navbar />
               <main className="p-4 sm:p-6 lg:p-8">
