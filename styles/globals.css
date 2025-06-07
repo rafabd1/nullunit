@@ -50,21 +50,4 @@
 
 body {
   background-color: hsl(var(--background));
-  background-image: /* Efeito de órbita com elipses e planetas */ radial-gradient(
-      ellipse 80% 50% at 50% 50%,
-      transparent 70%,
-      hsl(var(--border) / 0.2) 70.5%,
-      transparent 71%
-    ),
-    radial-gradient(
-      ellipse 50% 80% at 50% 50%,
-      transparent 70%,
-      hsl(var(--border) / 0.2) 70.5%,
-      transparent 71%
-    ),
-    /* Pequenos planetas/estrelas */
-    radial-gradient(circle at 15% 20%, hsl(var(--border) / 0.3) 0, transparent 1.5%),
-    radial-gradient(circle at 80% 30%, hsl(var(--border) / 0.3) 0, transparent 1.5%),
-    radial-gradient(circle at 35% 85%, hsl(var(--border) / 0.3) 0, transparent 1.5%);
-  background-repeat: no-repeat;
 }

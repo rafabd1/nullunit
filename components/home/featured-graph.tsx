@@ -9,7 +9,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { type Tag } from "@/types/tag";
-import { type PortfolioProject } from "@/types/portfolio";
 
 // A clean, unified type for content used within this component's logic.
 // This ensures all required properties are present and correctly typed.
@@ -298,7 +297,7 @@ export const FeaturedGraph = ({ content }: { content: GraphContent[] }) => {
   }, [hoveredNode, hoveredElement, dimensions.width]);
 
   useEffect(() => {
-    const MAX_VISIBLE_TITLES = 4;
+    const MAX_VISIBLE_TITLES = 3;
     const interval = setInterval(() => {
       if (hoveredNode) {
         setVisibleNodeIds([]);
@@ -318,7 +317,7 @@ export const FeaturedGraph = ({ content }: { content: GraphContent[] }) => {
         }
         return newVisible;
       });
-    }, 1000);
+    }, 1100);
     return () => clearInterval(interval);
   }, [graphData.nodes, hoveredNode, dimensions.width]);
 

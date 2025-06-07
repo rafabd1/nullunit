@@ -1,7 +1,7 @@
 import { type ReactElement } from "react";
 import NextLink from 'next/link';
 import { HeroSection } from "@/components/home/hero-section";
-import { siteConfig } from "@/config/site";
+//import { siteConfig } from "@/config/site";
 import { FeaturedSection } from "@/components/home/featured-section";
 import { apiFetch } from "@/lib/api";
 
