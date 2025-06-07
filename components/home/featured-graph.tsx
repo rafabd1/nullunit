@@ -131,20 +131,21 @@ export const FeaturedGraph = () => {
         const nodeRect = hoveredElement.getBoundingClientRect();
         const tooltipWidth = 256;
         const tooltipHeight = 120;
-        const gap = 20; // Increased gap for better spacing
+        const gap = 15;
 
         // Calculate the node's center relative to the container
         const nodeCenterX = (nodeRect.left + nodeRect.width / 2) - containerRect.left;
-        const nodeCenterY = (nodeRect.top + nodeRect.height / 2) - containerRect.top;
-
+        const nodeTopEdge = nodeRect.top - containerRect.top;
+        const nodeBottomEdge = nodeRect.bottom - containerRect.top;
+        
         // Ideal position: centered above the node
-        let top = nodeCenterY - tooltipHeight - gap;
+        let top = nodeTopEdge - tooltipHeight - gap;
         let left = nodeCenterX - tooltipWidth / 2;
         
         // --- Collision Correction ---
-        // Vertical: If not enough space above, flip it below
+        // Vertical: If not enough space above, flip below
         if (top < 10) {
-            top = nodeCenterY + gap;
+            top = nodeBottomEdge + gap;
         }
 
         // Horizontal: Clamp to container bounds
@@ -239,26 +240,41 @@ export const FeaturedGraph = () => {
                         }}
                         className="group"
                     >
-                        {/* New Glow Effect Element */}
-                        <motion.circle
-                            cx="0"
-                            cy="0"
-                            r={node.size}
-                            fill="hsl(var(--muted-foreground))"
-                            className="opacity-75"
-                            style={{ filter: 'blur(3px)'}}
-                            animate={{ scale: [1, 1.5, 1], opacity: [0.3, 0.7, 0.3] }}
-                            transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: Math.random() * 2.5 }}
-                        />
-                        {/* Main Visible Node */}
+                        {/* Glow effect is now on the circle, not the group. */}
                         <motion.circle
                             cx="0"
                             cy="0"
                             r={node.size}
                             fill="transparent"
                             stroke="hsl(var(--muted-foreground))"
-                            strokeWidth="0.3"
                             className="cursor-pointer"
+                            animate={{
+                                stroke: isHovered
+                                    ? "hsl(var(--foreground))"
+                                    : "hsl(var(--muted-foreground))",
+                                strokeWidth: isHovered ? 0.5 : 0.3,
+                                filter: isHovered
+                                ? `drop-shadow(0 0 3px hsl(var(--foreground)))`
+                                : [
+                                    `drop-shadow(0 0 0.5px hsl(var(--muted-foreground)))`,
+                                    `drop-shadow(0 0 2px hsl(var(--foreground)))`,
+                                    `drop-shadow(0 0 0.5px hsl(var(--muted-foreground)))`
+                                  ]
+                            }}
+                            transition={{
+                                // Default transition for hover effects
+                                duration: 0.2, 
+                                ease: 'easeOut',
+                                // Specific transition for the filter property
+                                filter: isHovered
+                                ? { duration: 0.3, ease: 'easeOut' }
+                                : {
+                                    duration: 3,
+                                    repeat: Infinity,
+                                    ease: "easeInOut",
+                                    delay: Math.random() * 3,
+                                  }
+                            }}
                         />
                         <text
                           x="0"
