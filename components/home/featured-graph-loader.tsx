@@ -7,7 +7,7 @@ const FeaturedGraph = dynamic(
   { 
     ssr: false,
     loading: () => (
-      <div className="relative flex h-[450px] w-full items-center justify-center rounded-xl bg-secondary text-muted-foreground -mx-6 lg:-mx-8">
+      <div className="relative flex h-[450px] w-full items-center justify-center rounded-xl bg-secondary text-muted-foreground">
         <p>Loading constellation...</p>
       </div>
     )

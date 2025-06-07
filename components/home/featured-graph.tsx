@@ -15,6 +15,13 @@ const DUMMY_CONTENT = [
   { id: "a2", type: "Article" as const, slug: "intro-malware-analysis", title: "Intro to Malware Analysis", description: "Learn the fundamentals of static and dynamic malware analysis.", likes: 95, tags: ["malware", "reverse-engineering"] },
   { id: "c2", type: "Course" as const, slug: "web-sec-fundamentals", title: "Web Security Fundamentals", description: "Covering the OWASP Top 10 and more.", likes: 150, tags: ["web", "pentesting"] },
   { id: "a3", type: "Article" as const, slug: "xss-patterns", title: "XSS Patterns and Bypasses", description: "Exploring advanced cross-site scripting vectors.", likes: 200, tags: ["web", "exploit"] },
+  { id: "c3", type: "Course" as const, slug: "web-sec-fundamentals", title: "Web Security Fundamentals", description: "Covering the OWASP Top 10 and more.", likes: 150, tags: ["web", "pentesting"] },
+  { id: "a4", type: "Article" as const, slug: "xss-patterns", title: "XSS Patterns and Bypasses", description: "Exploring advanced cross-site scripting vectors.", likes: 200, tags: ["web", "exploit"] },
+  { id: "c4", type: "Course" as const, slug: "web-sec-fundamentals", title: "Web Security Fundamentals", description: "Covering the OWASP Top 10 and more.", likes: 150, tags: ["web", "pentesting"] },
+  { id: "a5", type: "Article" as const, slug: "xss-patterns", title: "XSS Patterns and Bypasses", description: "Exploring advanced cross-site scripting vectors.", likes: 200, tags: ["web", "exploit"] },
+  { id: "c5", type: "Course" as const, slug: "web-sec-fundamentals", title: "Web Security Fundamentals", description: "Covering the OWASP Top 10 and more.", likes: 150, tags: ["web", "pentesting"] },
+  { id: "a6", type: "Article" as const, slug: "xss-patterns", title: "XSS Patterns and Bypasses", description: "Exploring advanced cross-site scripting vectors.", likes: 200, tags: ["web", "exploit"] },
+  { id: "c6", type: "Course" as const, slug: "web-sec-fundamentals", title: "Web Security Fundamentals", description: "Covering the OWASP Top 10 and more.", likes: 150, tags: ["web", "pentesting"] },
 ];
 
 const ICONS: Record<"Course" | "Article" | "Project", LucideIcon> = {
@@ -41,36 +48,69 @@ const scaleLikesToSize = (likes: number, minLikes: number, maxLikes: number, min
   return minSize + scale * (maxSize - minSize);
 };
 
-const getDistance = (node1: NodeObject, node2: NodeObject) =>
+const getDistance = (node1: { x: number; y: number }, node2: { x: number; y: number }) =>
   Math.sqrt(Math.pow(node1.x - node2.x, 2) + Math.pow(node1.y - node2.y, 2));
 
-const transformDataToGraph = (content: typeof DUMMY_CONTENT) => {
+const transformDataToGraph = (content: typeof DUMMY_CONTENT, width: number, height: number) => {
+    if (width === 0 || height === 0) {
+        return { nodes: [], links: [] };
+    }
+
     const likes = content.map(c => c.likes);
     const minLikes = Math.min(...likes);
     const maxLikes = Math.max(...likes);
+    
+    const TOP_MARGIN = 60;
+    const SIDE_MARGIN = 30;
+    const BOTTOM_MARGIN = 30;
 
-    // 1. Generate node positions with minimum distance
-    const nodes: NodeObject[] = [];
-    content.forEach(item => {
-        let pos = { x: 0, y: 0 };
-        let isOverlapping = true;
-        let attempts = 0;
-        const MIN_DIST = 15; // Minimum distance in percentage
+    let nodes: NodeObject[] = content.map(item => ({
+        ...item,
+        x: Math.random() * (width - SIDE_MARGIN * 2) + SIDE_MARGIN,
+        y: Math.random() * (height - TOP_MARGIN - BOTTOM_MARGIN) + TOP_MARGIN,
+        size: scaleLikesToSize(item.likes, minLikes, maxLikes, 8, 22),
+    }));
 
-        while (isOverlapping && attempts < 100) {
-            pos = { x: Math.random() * 80 + 10, y: Math.random() * 80 + 10 };
-            isOverlapping = nodes.some(n => getDistance({ ...pos } as NodeObject, n) < MIN_DIST);
-            attempts++;
-        }
+    const SIMULATION_ITERATIONS = 250;
+    const K_REPULSION = 0.02;     // Tuned for pixel-space: much lower force
+    const K_CENTERING = 0.00005;  // Tuned for pixel-space: much lower force
+    const MIN_DIST = Math.min(width, height) * 0.3; // Responsive minimum distance
 
-        nodes.push({
-            ...item,
-            ...pos,
-            size: scaleLikesToSize(item.likes, minLikes, maxLikes, 1.5, 3.5),
+    for (let i = 0; i < SIMULATION_ITERATIONS; i++) {
+        nodes.forEach((nodeA) => {
+            let totalForceX = 0;
+            let totalForceY = 0;
+
+            nodes.forEach((nodeB) => {
+                if (nodeA.id === nodeB.id) return;
+                const dx = nodeA.x - nodeB.x;
+                const dy = nodeA.y - nodeB.y;
+                let distance = getDistance(nodeA, nodeB);
+                distance = distance < 1 ? 1 : distance;
+                if (distance < MIN_DIST) {
+                    const force = K_REPULSION * (MIN_DIST - distance) / distance;
+                    totalForceX += dx * force;
+                    totalForceY += dy * force;
+                }
+            });
+            
+            const centerDx = width / 2 - nodeA.x;
+            const centerDy = height / 2 - nodeA.y;
+            totalForceX += centerDx * K_CENTERING;
+            totalForceY += centerDy * K_CENTERING;
+
+            nodeA.x += totalForceX * 0.1; // Apply forces with damping
+            nodeA.y += totalForceY * 0.1; // Apply forces with damping
+
+            const hMargin = nodeA.size + SIDE_MARGIN;
+            const vMarginTop = nodeA.size + TOP_MARGIN;
+            const vMarginBottom = nodeA.size + BOTTOM_MARGIN;
+            nodeA.x = Math.max(hMargin, Math.min(width - hMargin, nodeA.x));
+            nodeA.y = Math.max(vMarginTop, Math.min(height - vMarginBottom, nodeA.y));
         });
-    });
+    }
 
-    const links: { source: string, target: string }[] = [];
+    const allEdges: { source: string; target: string; dist: number }[] = [];
     const tagMap: { [key: string]: string[] } = {};
 
     content.forEach(item => {
@@ -80,52 +120,81 @@ const transformDataToGraph = (content: typeof DUMMY_CONTENT) => {
         });
     });
 
-    // 2. Generate links using a Minimum Spanning Tree (MST) for better layout
     Object.values(tagMap).forEach(nodeIds => {
         if (nodeIds.length < 2) return;
-        const groupNodes = nodeIds.map(id => nodes.find(n => n.id === id)!);
-        
-        const mstEdges: { source: string; target: string }[] = [];
-        const visited = new Set<string>([groupNodes[0].id]);
-        const edges: { from: string; to: string; dist: number }[] = [];
-
-        groupNodes.forEach(node1 => {
-            if (node1.id === groupNodes[0].id) return;
-            edges.push({ from: groupNodes[0].id, to: node1.id, dist: getDistance(groupNodes[0], node1) });
-        });
-        
-        while (visited.size < groupNodes.length && edges.length > 0) {
-            edges.sort((a, b) => a.dist - b.dist);
-            const edge = edges.shift();
-            if (!edge || visited.has(edge.to)) continue;
-            
-            visited.add(edge.to);
-            mstEdges.push({ source: edge.from, target: edge.to });
-            
-            const newNode = nodes.find(n => n.id === edge.to)!;
-            groupNodes.forEach(otherNode => {
-                if (!visited.has(otherNode.id)) {
-                    edges.push({ from: newNode.id, to: otherNode.id, dist: getDistance(newNode, otherNode) });
+        for (let i = 0; i < nodeIds.length; i++) {
+            for (let j = i + 1; j < nodeIds.length; j++) {
+                const nodeA = nodes.find(n => n.id === nodeIds[i])!;
+                const nodeB = nodes.find(n => n.id === nodeIds[j])!;
+                 if (!allEdges.some(e => (e.source === nodeB.id && e.target === nodeA.id))) {
+                    allEdges.push({
+                        source: nodeA.id,
+                        target: nodeB.id,
+                        dist: getDistance(nodeA, nodeB)
+                    });
                 }
-            });
+            }
         }
-        links.push(...mstEdges);
+    });
+
+    allEdges.sort((a, b) => a.dist - b.dist);
+    
+    const parent: { [key:string]: string } = {};
+    const findSet = (id: string): string => {
+        if (parent[id] === id) return id;
+        return parent[id] = findSet(parent[id]);
+    };
+    const uniteSets = (a: string, b: string) => {
+        a = findSet(a);
+        b = findSet(b);
+        if (a !== b) parent[b] = a;
+    };
+
+    nodes.forEach(node => { parent[node.id] = node.id; });
+    
+    const links: { source: string, target: string }[] = [];
+    allEdges.forEach(edge => {
+        if (findSet(edge.source) !== findSet(edge.target)) {
+            links.push({ source: edge.source, target: edge.target });
+            uniteSets(edge.source, edge.target);
+        }
     });
 
     return { nodes, links };
 }
 
 export const FeaturedGraph = () => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [hoveredNode, setHoveredNode] = useState<NodeObject | null>(null);
   const [visibleNodeIds, setVisibleNodeIds] = useState<string[]>([]);
   const [tooltipStyle, setTooltipStyle] = useState({});
-  const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredElement, setHoveredElement] = useState<SVGGElement | null>(null);
 
-  const graphData = useMemo(() => transformDataToGraph(DUMMY_CONTENT), []);
+  useEffect(() => {
+    const observer = new ResizeObserver(entries => {
+      if (entries && entries.length > 0 && entries[0].contentRect) {
+        setDimensions({ 
+          width: entries[0].contentRect.width, 
+          height: entries[0].contentRect.height 
+        });
+      }
+    });
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+    return () => {
+      if (containerRef.current) {
+        observer.unobserve(containerRef.current);
+      }
+    };
+  }, []);
+  
+  const graphData = useMemo(() => {
+    return transformDataToGraph(DUMMY_CONTENT, dimensions.width, dimensions.height);
+  }, [dimensions.width, dimensions.height]);
 
   useEffect(() => {
-    // New, robust logic for adaptive tooltip position
     if (hoveredNode && hoveredElement && containerRef.current) {
         const containerRect = containerRef.current.getBoundingClientRect();
         const nodeRect = hoveredElement.getBoundingClientRect();
@@ -133,22 +202,16 @@ export const FeaturedGraph = () => {
         const tooltipHeight = 120;
         const gap = 15;
 
-        // Calculate the node's center relative to the container
         const nodeCenterX = (nodeRect.left + nodeRect.width / 2) - containerRect.left;
         const nodeTopEdge = nodeRect.top - containerRect.top;
         const nodeBottomEdge = nodeRect.bottom - containerRect.top;
         
-        // Ideal position: centered above the node
         let top = nodeTopEdge - tooltipHeight - gap;
         let left = nodeCenterX - tooltipWidth / 2;
         
-        // --- Collision Correction ---
-        // Vertical: If not enough space above, flip below
         if (top < 10) {
             top = nodeBottomEdge + gap;
         }
-
-        // Horizontal: Clamp to container bounds
         if (left < 10) {
             left = 10;
         } else if (left + tooltipWidth > containerRect.width - 10) {
@@ -162,11 +225,10 @@ export const FeaturedGraph = () => {
             transform: '',
         });
     }
-  }, [hoveredNode, hoveredElement]);
+  }, [hoveredNode, hoveredElement, dimensions.width]);
 
   useEffect(() => {
-    // Logic for randomly showing node titles
-    const MAX_VISIBLE_TITLES = 3;
+    const MAX_VISIBLE_TITLES = Math.floor(dimensions.width / 300);
     const interval = setInterval(() => {
       if (hoveredNode) {
         setVisibleNodeIds([]);
@@ -188,125 +250,141 @@ export const FeaturedGraph = () => {
       });
     }, 1500);
     return () => clearInterval(interval);
-  }, [graphData.nodes, hoveredNode]);
+  }, [graphData.nodes, hoveredNode, dimensions.width]);
 
   const getNodeById = (id: string) => graphData.nodes.find(n => n.id === id);
 
   return (
-    <div ref={containerRef} className="relative rounded-xl bg-secondary h-[420px] overflow-hidden">
+    <div ref={containerRef} className="relative w-full rounded-xl bg-secondary h-[450px] overflow-hidden">
        <h2 className="absolute top-6 left-6 text-lg font-semibold tracking-tight z-20">Featured</h2>
        
        <div className="absolute inset-0 z-10">
-          <svg width="100%" height="100%" viewBox="0 0 100 100">
-            <defs>
-                <filter id="glow-filter" x="-100%" y="-100%" width="300%" height="300%">
-                    <feGaussianBlur stdDeviation="1" result="coloredBlur" />
-                </filter>
-            </defs>
+          {dimensions.width > 0 && (
+            <svg width="100%" height="100%" viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}>
+              <defs>
+                  <filter id="glow-filter" x="-100%" y="-100%" width="300%" height="300%">
+                      <feGaussianBlur stdDeviation="4" result="coloredBlur" />
+                  </filter>
+              </defs>
 
-            {graphData.links.map((link, i) => {
-              const sourceNode = getNodeById(link.source);
-              const targetNode = getNodeById(link.target);
-              if (!sourceNode || !targetNode) return null;
-
-              return (
-                <motion.line
-                  key={`${link.source}-${link.target}-${i}`}
-                  x1={sourceNode.x}
-                  y1={sourceNode.y}
-                  x2={targetNode.x}
-                  y2={targetNode.y}
-                  stroke="rgba(255, 255, 255, 0.2)"
-                  strokeWidth="0.15"
-                  initial={{ pathLength: 0, opacity: 0 }}
-                  animate={{ pathLength: 1, opacity: 1 }}
-                  transition={{ duration: 1.5, delay: i * 0.15, ease: "easeInOut" }}
-                />
-              );
-            })}
-          
-            {graphData.nodes.map(node => {
-                const isHovered = hoveredNode?.id === node.id;
-                const isRandomlyVisible = visibleNodeIds.includes(node.id);
+              {graphData.links.map((link, i) => {
+                const sourceNode = getNodeById(link.source);
+                const targetNode = getNodeById(link.target);
+                if (!sourceNode || !targetNode) return null;
 
                 return (
-                    <motion.g 
-                        key={node.id} 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.5, delay: Math.random() * 0.5 }}
-                        transform={`translate(${node.x}, ${node.y})`}
-                        onMouseEnter={(e) => {
-                            setHoveredNode(node);
-                            setHoveredElement(e.currentTarget as SVGGElement);
-                        }}
-                        onMouseLeave={() => {
-                            setHoveredNode(null);
-                            setHoveredElement(null);
-                        }}
-                        className="group"
-                    >
-                        {/* More performant glow effect using a blurred circle with opacity animation */}
-                        <motion.circle
-                            cx="0"
-                            cy="0"
-                            r={node.size}
-                            fill="transparent"
-                            stroke="hsl(var(--foreground))"
-                            strokeWidth="0.6"
-                            filter="url(#glow-filter)"
-                            className="pointer-events-none"
-                            animate={{
-                                opacity: isHovered ? 0.9 : [0.2, 0.7]
-                            }}
-                            transition={{
-                                opacity: isHovered 
-                                ? { ease: 'easeOut', duration: 0.2 } 
-                                : {
-                                    duration: 2.5,
-                                    repeat: Infinity,
-                                    repeatType: 'mirror',
-                                    ease: 'easeInOut',
-                                    delay: Math.random() * 2.5
-                                }
-                            }}
-                        />
-
+                  <motion.line
+                    key={`${link.source}-${link.target}-${i}`}
+                    x1={sourceNode.x}
+                    y1={sourceNode.y}
+                    x2={targetNode.x}
+                    y2={targetNode.y}
+                    stroke="rgba(255, 255, 255, 0.2)"
+                    strokeWidth="1"
+                    initial={{ pathLength: 0, opacity: 0 }}
+                    animate={{ pathLength: 1, opacity: 1 }}
+                    transition={{ duration: 1.5, delay: i * 0.15, ease: "easeInOut" }}
+                  />
+                );
+              })}
+            
+              {graphData.nodes.map(node => {
+                  const isHovered = hoveredNode?.id === node.id;
+                  const isRandomlyVisible = visibleNodeIds.includes(node.id);
+  
+                  return (
+                      <motion.g 
+                          key={node.id}
+                          initial={{
+                            opacity: 0,
+                            scale: 0.5,
+                            x: dimensions.width / 2,
+                            y: dimensions.height / 2
+                          }}
+                          animate={{
+                            opacity: 1,
+                            scale: 1,
+                            x: node.x,
+                            y: node.y
+                          }}
+                          transition={{
+                            type: "spring",
+                            stiffness: 50,
+                            damping: 15,
+                            mass: 1,
+                            delay: Math.random() * 0.2
+                          }}
+                          onMouseEnter={(e) => {
+                              setHoveredNode(node);
+                              setHoveredElement(e.currentTarget as SVGGElement);
+                          }}
+                          onMouseLeave={() => {
+                              setHoveredNode(null);
+                              setHoveredElement(null);
+                          }}
+                          className="group"
+                      >
                          <motion.circle
                              cx="0"
                              cy="0"
                              r={node.size}
                              fill="transparent"
-                             stroke="hsl(var(--muted-foreground))"
-                             className="cursor-pointer"
+                             stroke="hsl(var(--foreground))"
+                             strokeWidth="2"
+                             filter="url(#glow-filter)"
+                             className="pointer-events-none"
                              animate={{
-                                 stroke: isHovered
-                                     ? "hsl(var(--foreground))"
-                                     : "hsl(var(--muted-foreground))",
-                                 strokeWidth: isHovered ? 0.5 : 0.3,
+                                 opacity: isHovered ? 0.9 : [0.2, 0.7]
                              }}
                              transition={{
-                                 duration: 0.2, 
-                                 ease: 'easeOut',
+                                 opacity: isHovered 
+                                 ? { ease: 'easeOut', duration: 0.2 } 
+                                 : {
+                                     duration: 2.5,
+                                     repeat: Infinity,
+                                     repeatType: 'mirror',
+                                     ease: 'easeInOut',
+                                     delay: Math.random() * 2.5
+                                 }
                              }}
                          />
-                         <text
-                           x="0"
-                           y={node.size + 4}
-                           textAnchor="middle"
-                           fill="hsl(var(--muted-foreground))"
-                           className="transition-opacity duration-1000 pointer-events-none"
-                           style={{
-                               opacity: isHovered || isRandomlyVisible ? 1 : 0,
-                               fontSize: "2.25px"
-                           }}
-                         >
-                           {node.title}
-                         </text>
-                    </motion.g>
-                )
-            })}
-          </svg>
+  
+                          <motion.circle
+                              cx="0"
+                              cy="0"
+                              r={node.size}
+                              fill="hsl(var(--secondary))"
+                              stroke="hsl(var(--muted-foreground))"
+                              className="cursor-pointer"
+                              animate={{
+                                  stroke: isHovered
+                                      ? "hsl(var(--foreground))"
+                                      : "hsl(var(--muted-foreground))",
+                                  strokeWidth: isHovered ? 1.5 : 1,
+                              }}
+                              transition={{
+                                  duration: 0.2, 
+                                  ease: 'easeOut',
+                              }}
+                          />
+                          <text
+                            x="0"
+                            y={node.size + 14}
+                            textAnchor="middle"
+                            fill="hsl(var(--muted-foreground))"
+                            className="transition-opacity duration-1000 pointer-events-none"
+                            style={{
+                                opacity: isHovered || isRandomlyVisible ? 1 : 0,
+                                fontSize: "12px"
+                            }}
+                          >
+                            {node.title}
+                          </text>
+                      </motion.g>
+                  )
+              })}
+            </svg>
+          )}
        </div>
 
        <AnimatePresence>
