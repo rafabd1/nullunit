@@ -15,5 +15,5 @@ const FeaturedGraph = dynamic(
 );
 
 export const FeaturedGraphLoader = () => {
-  return <FeaturedGraph />;
+  return <FeaturedGraph content={[]} />;
 }; 

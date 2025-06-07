@@ -8,15 +8,12 @@ import {
   FileText,
   type LucideIcon,
 } from "lucide-react";
-import { apiFetch } from "@/lib/api";
-import { type Article } from "@/types/article";
-import { type Course } from "@/types/course";
-import { type PortfolioProject } from "@/types/portfolio";
 import { type Tag } from "@/types/tag";
+import { type PortfolioProject } from "@/types/portfolio";
 
 // A clean, unified type for content used within this component's logic.
 // This ensures all required properties are present and correctly typed.
-interface GraphContent {
+export interface GraphContent {
   id: string;
   slug: string;
   title: string;
@@ -100,7 +97,7 @@ const transformDataToGraph = (content: GraphContent[], width: number, height: nu
     const maxLikes = Math.max(...likes);
     
     const TOP_MARGIN = 60;
-    const SIDE_MARGIN = 30;
+    const SIDE_MARGIN = 60;
     const BOTTOM_MARGIN = 30;
 
     let nodes: NodeObject[] = content.map(item => ({
