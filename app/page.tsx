@@ -62,8 +62,8 @@ export default async function HomePage(): Promise<ReactElement> {
         <FeaturedGraphLoader />
       </section>
 
-      <section className="w-full">
-        <div className="mx-auto grid max-w-5xl grid-cols-1 gap-x-8 gap-y-12 md:grid-cols-3">
+      <section className="mx-auto w-full max-w-5xl px-6">
+        <div className="grid grid-cols-1 gap-x-8 gap-y-12 md:grid-cols-3 justify-items-center">
           {contentSections.map((section) => (
             <ContentList
               key={section.title}

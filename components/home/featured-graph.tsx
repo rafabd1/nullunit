@@ -254,7 +254,7 @@ export const FeaturedGraph = () => {
         const processedContent: GraphContent[] = allContent.map(item => {
             let type: "Article" | "Course" | "Project";
             if ('repo_url' in item) type = 'Project';
-            else if ('modules' in item) type = 'Course';
+            else if ('is_paid' in item) type = 'Course';
             else type = 'Article';
 
             return {
