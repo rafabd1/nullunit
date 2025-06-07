@@ -16,12 +16,6 @@ const DUMMY_CONTENT = [
   { id: "c2", type: "Course" as const, slug: "web-sec-fundamentals", title: "Web Security Fundamentals", description: "Covering the OWASP Top 10 and more.", likes: 150, tags: ["web", "pentesting"] },
   { id: "a3", type: "Article" as const, slug: "xss-patterns", title: "XSS Patterns and Bypasses", description: "Exploring advanced cross-site scripting vectors.", likes: 200, tags: ["web", "exploit"] },
   { id: "c3", type: "Course" as const, slug: "web-sec-fundamentals", title: "Web Security Fundamentals", description: "Covering the OWASP Top 10 and more.", likes: 150, tags: ["web", "pentesting"] },
-  { id: "a4", type: "Article" as const, slug: "xss-patterns", title: "XSS Patterns and Bypasses", description: "Exploring advanced cross-site scripting vectors.", likes: 200, tags: ["web", "exploit"] },
-  { id: "c4", type: "Course" as const, slug: "web-sec-fundamentals", title: "Web Security Fundamentals", description: "Covering the OWASP Top 10 and more.", likes: 150, tags: ["web", "pentesting"] },
-  { id: "a5", type: "Article" as const, slug: "xss-patterns", title: "XSS Patterns and Bypasses", description: "Exploring advanced cross-site scripting vectors.", likes: 200, tags: ["web", "exploit"] },
-  { id: "c5", type: "Course" as const, slug: "web-sec-fundamentals", title: "Web Security Fundamentals", description: "Covering the OWASP Top 10 and more.", likes: 150, tags: ["web", "pentesting"] },
-  { id: "a6", type: "Article" as const, slug: "xss-patterns", title: "XSS Patterns and Bypasses", description: "Exploring advanced cross-site scripting vectors.", likes: 200, tags: ["web", "exploit"] },
-  { id: "c6", type: "Course" as const, slug: "web-sec-fundamentals", title: "Web Security Fundamentals", description: "Covering the OWASP Top 10 and more.", likes: 150, tags: ["web", "pentesting"] },
 ];
 
 const ICONS: Record<"Course" | "Article" | "Project", LucideIcon> = {
@@ -50,6 +44,40 @@ const scaleLikesToSize = (likes: number, minLikes: number, maxLikes: number, min
 
 const getDistance = (node1: { x: number; y: number }, node2: { x: number; y: number }) =>
   Math.sqrt(Math.pow(node1.x - node2.x, 2) + Math.pow(node1.y - node2.y, 2));
+
+// --- Line Intersection Helpers ---
+
+const onSegment = (p: {x:number, y:number}, q: {x:number, y:number}, r: {x:number, y:number}) => {
+    return (
+        q.x <= Math.max(p.x, r.x) && q.x >= Math.min(p.x, r.x) &&
+        q.y <= Math.max(p.y, r.y) && q.y >= Math.min(p.y, r.y)
+    );
+};
+
+const orientation = (p: {x:number, y:number}, q: {x:number, y:number}, r: {x:number, y:number}) => {
+    const val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
+    if (val === 0) return 0;
+    return val > 0 ? 1 : 2;
+};
+
+const doLineSegmentsIntersect = (p1: {x:number, y:number}, q1: {x:number, y:number}, p2: {x:number, y:number}, q2: {x:number, y:number}) => {
+    const o1 = orientation(p1, q1, p2);
+    const o2 = orientation(p1, q1, q2);
+    const o3 = orientation(p2, q2, p1);
+    const o4 = orientation(p2, q2, q1);
+
+    if (o1 !== o2 && o3 !== o4) {
+        return true;
+    }
+
+    // Special Cases for collinear points
+    if (o1 === 0 && onSegment(p1, p2, q1)) return true;
+    if (o2 === 0 && onSegment(p1, q2, q1)) return true;
+    if (o3 === 0 && onSegment(p2, p1, q2)) return true;
+    if (o4 === 0 && onSegment(p2, q1, q2)) return true;
+
+    return false;
+};
 
 const transformDataToGraph = (content: typeof DUMMY_CONTENT, width: number, height: number) => {
     if (width === 0 || height === 0) {
@@ -153,10 +181,33 @@ const transformDataToGraph = (content: typeof DUMMY_CONTENT, width: number, heig
     nodes.forEach(node => { parent[node.id] = node.id; });
     
     const links: { source: string, target: string }[] = [];
+    const getNodeById = (id: string) => nodes.find(n => n.id === id)!;
+
     allEdges.forEach(edge => {
         if (findSet(edge.source) !== findSet(edge.target)) {
-            links.push({ source: edge.source, target: edge.target });
-            uniteSets(edge.source, edge.target);
+            const s1 = getNodeById(edge.source);
+            const t1 = getNodeById(edge.target);
+            
+            let intersects = false;
+            for (const existingLink of links) {
+                const s2 = getNodeById(existingLink.source);
+                const t2 = getNodeById(existingLink.target);
+                
+                // If the segments share an endpoint, they can't "cross" in a problematic way.
+                if (s1.id === s2.id || s1.id === t2.id || t1.id === s2.id || t1.id === t2.id) {
+                    continue;
+                }
+                
+                if (doLineSegmentsIntersect(s1, t1, s2, t2)) {
+                    intersects = true;
+                    break;
+                }
+            }
+            
+            if (!intersects) {
+                links.push({ source: edge.source, target: edge.target });
+                uniteSets(edge.source, edge.target);
+            }
         }
     });
 
@@ -228,7 +279,7 @@ export const FeaturedGraph = () => {
   }, [hoveredNode, hoveredElement, dimensions.width]);
 
   useEffect(() => {
-    const MAX_VISIBLE_TITLES = Math.floor(dimensions.width / 300);
+    const MAX_VISIBLE_TITLES = 4;
     const interval = setInterval(() => {
       if (hoveredNode) {
         setVisibleNodeIds([]);
@@ -248,7 +299,7 @@ export const FeaturedGraph = () => {
         }
         return newVisible;
       });
-    }, 1500);
+    }, 1000);
     return () => clearInterval(interval);
   }, [graphData.nodes, hoveredNode, dimensions.width]);
 
