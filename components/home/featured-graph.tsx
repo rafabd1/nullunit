@@ -198,6 +198,12 @@ export const FeaturedGraph = () => {
        
        <div className="absolute inset-0 z-10">
           <svg width="100%" height="100%" viewBox="0 0 100 100">
+            <defs>
+                <filter id="glow-filter" x="-100%" y="-100%" width="300%" height="300%">
+                    <feGaussianBlur stdDeviation="1" result="coloredBlur" />
+                </filter>
+            </defs>
+
             {graphData.links.map((link, i) => {
               const sourceNode = getNodeById(link.source);
               const targetNode = getNodeById(link.target);
@@ -240,55 +246,63 @@ export const FeaturedGraph = () => {
                         }}
                         className="group"
                     >
-                        {/* Glow effect is now on the circle, not the group. */}
+                        {/* More performant glow effect using a blurred circle with opacity animation */}
                         <motion.circle
                             cx="0"
                             cy="0"
                             r={node.size}
                             fill="transparent"
-                            stroke="hsl(var(--muted-foreground))"
-                            className="cursor-pointer"
+                            stroke="hsl(var(--foreground))"
+                            strokeWidth="0.6"
+                            filter="url(#glow-filter)"
+                            className="pointer-events-none"
                             animate={{
-                                stroke: isHovered
-                                    ? "hsl(var(--foreground))"
-                                    : "hsl(var(--muted-foreground))",
-                                strokeWidth: isHovered ? 0.5 : 0.3,
-                                filter: isHovered
-                                ? `drop-shadow(0 0 3px hsl(var(--foreground)))`
-                                : [
-                                    `drop-shadow(0 0 0.5px hsl(var(--muted-foreground)))`,
-                                    `drop-shadow(0 0 2px hsl(var(--foreground)))`,
-                                    `drop-shadow(0 0 0.5px hsl(var(--muted-foreground)))`
-                                  ]
+                                opacity: isHovered ? 0.9 : [0.2, 0.7]
                             }}
                             transition={{
-                                // Default transition for hover effects
-                                duration: 0.2, 
-                                ease: 'easeOut',
-                                // Specific transition for the filter property
-                                filter: isHovered
-                                ? { duration: 0.3, ease: 'easeOut' }
+                                opacity: isHovered 
+                                ? { ease: 'easeOut', duration: 0.2 } 
                                 : {
-                                    duration: 3,
+                                    duration: 2.5,
                                     repeat: Infinity,
-                                    ease: "easeInOut",
-                                    delay: Math.random() * 3,
-                                  }
+                                    repeatType: 'mirror',
+                                    ease: 'easeInOut',
+                                    delay: Math.random() * 2.5
+                                }
                             }}
                         />
-                        <text
-                          x="0"
-                          y={node.size + 4}
-                          textAnchor="middle"
-                          fill="hsl(var(--muted-foreground))"
-                          className="transition-opacity duration-1000 pointer-events-none"
-                          style={{
-                              opacity: isHovered || isRandomlyVisible ? 1 : 0,
-                              fontSize: "2.25px"
-                          }}
-                        >
-                          {node.title}
-                        </text>
+
+                         <motion.circle
+                             cx="0"
+                             cy="0"
+                             r={node.size}
+                             fill="transparent"
+                             stroke="hsl(var(--muted-foreground))"
+                             className="cursor-pointer"
+                             animate={{
+                                 stroke: isHovered
+                                     ? "hsl(var(--foreground))"
+                                     : "hsl(var(--muted-foreground))",
+                                 strokeWidth: isHovered ? 0.5 : 0.3,
+                             }}
+                             transition={{
+                                 duration: 0.2, 
+                                 ease: 'easeOut',
+                             }}
+                         />
+                         <text
+                           x="0"
+                           y={node.size + 4}
+                           textAnchor="middle"
+                           fill="hsl(var(--muted-foreground))"
+                           className="transition-opacity duration-1000 pointer-events-none"
+                           style={{
+                               opacity: isHovered || isRandomlyVisible ? 1 : 0,
+                               fontSize: "2.25px"
+                           }}
+                         >
+                           {node.title}
+                         </text>
                     </motion.g>
                 )
             })}
