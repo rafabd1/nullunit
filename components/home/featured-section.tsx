@@ -80,7 +80,7 @@ export const FeaturedSection = () => {
   }
 
   return (
-    <div className="relative rounded-xl bg-secondary p-6">
+    <div className="relative rounded-xl bg-secondary p-6 shadow-[-6px_8px_24px_-4px_rgba(0,0,0,0.2)] dark:shadow-[-6px_8px_24px_-4px_rgba(0,0,0,0.4)]">
         <h2 className="absolute top-6 left-6 text-lg font-semibold tracking-tight z-20">Featured</h2>
         <div className="grid h-full grid-cols-1 gap-8 md:grid-cols-2">
             <div className="w-full">

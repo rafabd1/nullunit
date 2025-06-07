@@ -5,12 +5,15 @@
 @layer base {
   :root {
     --radius: 0.75rem;
+    --shadow: 220 3% 85%;
   }
  
   .dark {
     --background: 210 14% 9%; /* Cor #13161a */
     --foreground: 210 20% 98%;
     
+    --shadow: 0 0% 0%;
+
     --panel: 210 11% 12%; 
     --card: 210 8% 12%; /* Cor #1b1e21 */
     --card-foreground: 210 20% 98%;
