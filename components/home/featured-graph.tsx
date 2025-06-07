@@ -1,5 +1,6 @@
 "use client";
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   BookMarked,
@@ -7,18 +8,26 @@ import {
   FileText,
   type LucideIcon,
 } from "lucide-react";
+import { apiFetch } from "@/lib/api";
+import { type Article } from "@/types/article";
+import { type Course } from "@/types/course";
+import { type PortfolioProject } from "@/types/portfolio";
+import { type Tag } from "@/types/tag";
 
-const DUMMY_CONTENT = [
-  { id: "c1", type: "Course" as const, slug: "adv-exploit-dev", title: "Advanced Exploit Development", description: "Deep dive into modern exploitation techniques.", likes: 85, tags: ["exploit", "reverse-engineering"] },
-  { id: "a1", type: "Article" as const, slug: "rop-chains", title: "Understanding ROP Chains", description: "A detailed breakdown of Return-Oriented Programming.", likes: 120, tags: ["exploit", "memory-corruption"] },
-  { id: "p1", type: "Project" as const, slug: "rootkit-detector", title: "Rootkit Detector", description: "An open-source tool to detect kernel-level rootkits.", likes: 250, tags: ["malware", "reverse-engineering"] },
-  { id: "a2", type: "Article" as const, slug: "intro-malware-analysis", title: "Intro to Malware Analysis", description: "Learn the fundamentals of static and dynamic malware analysis.", likes: 95, tags: ["malware", "reverse-engineering"] },
-  { id: "c2", type: "Course" as const, slug: "web-sec-fundamentals", title: "Web Security Fundamentals", description: "Covering the OWASP Top 10 and more.", likes: 150, tags: ["web", "pentesting"] },
-  { id: "a3", type: "Article" as const, slug: "xss-patterns", title: "XSS Patterns and Bypasses", description: "Exploring advanced cross-site scripting vectors.", likes: 200, tags: ["web", "exploit"] },
-  { id: "c3", type: "Course" as const, slug: "web-sec-fundamentals", title: "Web Security Fundamentals", description: "Covering the OWASP Top 10 and more.", likes: 150, tags: ["web", "pentesting"] },
-];
+// A clean, unified type for content used within this component's logic.
+// This ensures all required properties are present and correctly typed.
+interface GraphContent {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  repo_url?: string;
+  type: "Article" | "Course" | "Project";
+  likes: number;
+  tags: Tag[];
+}
 
-const ICONS: Record<"Course" | "Article" | "Project", LucideIcon> = {
+const ICONS: Record<"Article" | "Course" | "Project", LucideIcon> = {
   Course: BookMarked,
   Article: FileText,
   Project: FolderGit2,
@@ -29,11 +38,13 @@ type NodeObject = {
   title: string;
   description: string;
   tags: string[];
-  type: "Course" | "Article" | "Project";
+  type: "Article" | "Course" | "Project";
   likes: number;
   x: number;
   y: number;
   size: number;
+  slug: string;
+  repo_url?: string;
 };
 
 const scaleLikesToSize = (likes: number, minLikes: number, maxLikes: number, minSize: number, maxSize: number): number => {
@@ -79,8 +90,8 @@ const doLineSegmentsIntersect = (p1: {x:number, y:number}, q1: {x:number, y:numb
     return false;
 };
 
-const transformDataToGraph = (content: typeof DUMMY_CONTENT, width: number, height: number) => {
-    if (width === 0 || height === 0) {
+const transformDataToGraph = (content: GraphContent[], width: number, height: number) => {
+    if (width === 0 || height === 0 || content.length === 0) {
         return { nodes: [], links: [] };
     }
 
@@ -94,9 +105,11 @@ const transformDataToGraph = (content: typeof DUMMY_CONTENT, width: number, heig
 
     let nodes: NodeObject[] = content.map(item => ({
         ...item,
+        // This is now safe because the `tags` property is guaranteed to be an array.
+        tags: item.tags.map(tag => tag.name),
         x: Math.random() * (width - SIDE_MARGIN * 2) + SIDE_MARGIN,
         y: Math.random() * (height - TOP_MARGIN - BOTTOM_MARGIN) + TOP_MARGIN,
-        size: scaleLikesToSize(item.likes, minLikes, maxLikes, 8, 22),
+        size: scaleLikesToSize(item.likes, minLikes, maxLikes, 2, 9),
     }));
 
     const SIMULATION_ITERATIONS = 250;
@@ -139,31 +152,18 @@ const transformDataToGraph = (content: typeof DUMMY_CONTENT, width: number, heig
     }
 
     const allEdges: { source: string; target: string; dist: number }[] = [];
-    const tagMap: { [key: string]: string[] } = {};
-
-    content.forEach(item => {
-        item.tags.forEach(tag => {
-            if (!tagMap[tag]) tagMap[tag] = [];
-            tagMap[tag].push(item.id);
-        });
-    });
-
-    Object.values(tagMap).forEach(nodeIds => {
-        if (nodeIds.length < 2) return;
-        for (let i = 0; i < nodeIds.length; i++) {
-            for (let j = i + 1; j < nodeIds.length; j++) {
-                const nodeA = nodes.find(n => n.id === nodeIds[i])!;
-                const nodeB = nodes.find(n => n.id === nodeIds[j])!;
-                 if (!allEdges.some(e => (e.source === nodeB.id && e.target === nodeA.id))) {
-                    allEdges.push({
-                        source: nodeA.id,
-                        target: nodeB.id,
-                        dist: getDistance(nodeA, nodeB)
-                    });
-                }
-            }
+    // Create edges between all possible pairs of nodes, regardless of tags.
+    for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+            const nodeA = nodes[i];
+            const nodeB = nodes[j];
+            allEdges.push({
+                source: nodeA.id,
+                target: nodeB.id,
+                dist: getDistance(nodeA, nodeB),
+            });
         }
-    });
+    }
 
     allEdges.sort((a, b) => a.dist - b.dist);
     
@@ -216,34 +216,111 @@ const transformDataToGraph = (content: typeof DUMMY_CONTENT, width: number, heig
 
 export const FeaturedGraph = () => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [content, setContent] = useState<GraphContent[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // State for the calculated graph data
+  const [graphData, setGraphData] = useState<{ nodes: NodeObject[], links: { source: string, target: string }[] }>({ nodes: [], links: [] });
+
   const [hoveredNode, setHoveredNode] = useState<NodeObject | null>(null);
   const [visibleNodeIds, setVisibleNodeIds] = useState<string[]>([]);
   const [tooltipStyle, setTooltipStyle] = useState({});
   const [hoveredElement, setHoveredElement] = useState<SVGGElement | null>(null);
 
   useEffect(() => {
-    const observer = new ResizeObserver(entries => {
-      if (entries && entries.length > 0 && entries[0].contentRect) {
-        setDimensions({ 
-          width: entries[0].contentRect.width, 
-          height: entries[0].contentRect.height 
+    const fetchFeaturedContent = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const [articlesRes, coursesRes, projectsRes] = await Promise.all([
+          apiFetch("/articles"),
+          apiFetch("/courses"),
+          apiFetch("/portfolio"),
+        ]);
+
+        if (!articlesRes.ok || !coursesRes.ok || !projectsRes.ok) {
+          throw new Error("Failed to fetch one or more content types.");
+        }
+
+        const articles: Article[] = await articlesRes.json();
+        const courses: Course[] = await coursesRes.json();
+        const projects: PortfolioProject[] = await projectsRes.json();
+
+        const allContent: (Article | Course | PortfolioProject)[] = [...articles, ...courses, ...projects];
+
+        const processedContent: GraphContent[] = allContent.map(item => {
+            let type: "Article" | "Course" | "Project";
+            if ('repo_url' in item) type = 'Project';
+            else if ('modules' in item) type = 'Course';
+            else type = 'Article';
+
+            return {
+                ...item,
+                type: type,
+                likes: (item as any).likes || 0,
+                description: item.description || "",
+                tags: item.tags || [],
+            };
         });
-      }
-    });
-    if (containerRef.current) {
-      observer.observe(containerRef.current);
-    }
-    return () => {
-      if (containerRef.current) {
-        observer.unobserve(containerRef.current);
+
+        const featuredContent = processedContent
+          .sort((a, b) => b.likes - a.likes)
+          .slice(0, 9);
+
+        console.log(featuredContent);
+        setContent(featuredContent);
+      } catch (err: any) {
+        console.error("Failed to fetch featured content:", err);
+        setError("Could not load featured content.");
+      } finally {
+        setIsLoading(false);
       }
     };
+    fetchFeaturedContent();
   }, []);
   
-  const graphData = useMemo(() => {
-    return transformDataToGraph(DUMMY_CONTENT, dimensions.width, dimensions.height);
-  }, [dimensions.width, dimensions.height]);
+  // This effect now triggers the graph calculation *after* content is loaded and the container is available.
+  useEffect(() => {
+    // Only proceed if we have content and a container with a measurable size.
+    if (content.length > 0 && containerRef.current && containerRef.current.offsetWidth > 0) {
+      const width = containerRef.current.offsetWidth;
+      const height = containerRef.current.offsetHeight;
+      
+      // Update dimensions state if it's not already set correctly.
+      if (dimensions.width !== width || dimensions.height !== height) {
+        setDimensions({ width, height });
+      }
+
+      const newGraphData = transformDataToGraph(content, width, height);
+      setGraphData(newGraphData);
+    }
+  }, [content]); // This effect depends ONLY on content.
+
+  // This effect handles responsive resizing *after* the initial layout is done.
+  useEffect(() => {
+    const currentRef = containerRef.current;
+    if (!currentRef) return;
+    
+    const observer = new ResizeObserver(entries => {
+      // Only proceed if there's content to re-calculate for.
+      if (content.length > 0 && entries && entries.length > 0 && entries[0].contentRect) {
+        const { width, height } = entries[0].contentRect;
+        if (width > 0 && height > 0) {
+          setDimensions({ width, height });
+          const newGraphData = transformDataToGraph(content, width, height);
+          setGraphData(newGraphData);
+        }
+      }
+    });
+    observer.observe(currentRef);
+    
+    return () => {
+      observer.unobserve(currentRef);
+    };
+  }, [content]); // Re-attach observer logic if content changes.
 
   useEffect(() => {
     if (hoveredNode && hoveredElement && containerRef.current) {
@@ -304,6 +381,29 @@ export const FeaturedGraph = () => {
   }, [graphData.nodes, hoveredNode, dimensions.width]);
 
   const getNodeById = (id: string) => graphData.nodes.find(n => n.id === id);
+
+  const handleNodeClick = (node: NodeObject) => {
+    if (node.type === "Project" && node.repo_url) {
+      window.open(node.repo_url, "_blank", "noopener,noreferrer");
+    } else {
+      const path = `/${node.type.toLowerCase()}s/${node.slug}`;
+      router.push(path);
+    }
+  };
+
+  if (error) {
+    return (
+      <div className="relative flex h-[450px] w-full items-center justify-center rounded-xl bg-secondary text-red-500">
+        <p>{error}</p>
+      </div>
+    );
+  }
+
+  // The loading state from the dynamic import will cover the initial load.
+  // This check is for when the component is mounted but data is still fetching.
+  if (isLoading && content.length === 0) {
+    return null; // Or a more specific loading indicator if desired
+  }
 
   return (
     <div ref={containerRef} className="relative w-full rounded-xl bg-secondary h-[450px] overflow-hidden">
@@ -374,6 +474,7 @@ export const FeaturedGraph = () => {
                               setHoveredElement(null);
                           }}
                           className="group"
+                          onClick={() => handleNodeClick(node)}
                       >
                          <motion.circle
                              cx="0"

@@ -3,6 +3,7 @@ import NextLink from 'next/link';
 import { HeroSection } from "@/components/home/hero-section";
 import { siteConfig } from "@/config/site";
 import { FeaturedGraphLoader } from "@/components/home/featured-graph-loader";
+import { apiFetch } from "@/lib/api";
 
 interface ContentItem {
   id: string;
@@ -13,11 +14,10 @@ interface ContentItem {
   repo_url?: string;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
-
 async function fetchContent(endpoint: string): Promise<any[]> {
   try {
-    const res = await fetch(`${API_BASE_URL}/${endpoint}`, { next: { revalidate: 3600 } });
+    const res = await apiFetch(`/${endpoint}`, { next: { revalidate: 3600 } });
+
     if (!res.ok) {
       console.error(`Failed to fetch ${endpoint}: ${res.statusText}`);
       return [];
